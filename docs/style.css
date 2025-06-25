@@ -1,0 +1,58 @@
+/* 1. Import a clean, readable font */
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap');
+
+/* 2. Apply globally */
+body {
+    font-family: 'Open Sans', Arial, sans-serif;
+}
+
+/* wrap sidebar + content */
+.wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* fixed-width sidebar */
+.sidebar {
+    width: 200px;
+    padding: 1em;
+    background: #f4f4f4;
+    border-right: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+/* sidebar heading */
+.sidebar h2 {
+    margin: 0 0 1em;
+    padding: 0;
+}
+
+/* reset list defaults */
+.sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* vertical gap between items */
+.sidebar ul li {
+    margin-bottom: 1em;
+}
+
+/* 3. Link styling: blu Savoia, no underline */
+.sidebar ul li a {
+    display: block;
+    color: #005AA7;        /* blu Savoia */
+    text-decoration: none;
+}
+
+/* bold the active page link */
+.sidebar ul li.active > a {
+    font-weight: 700;
+}
+
+/* main content area */
+.main-content {
+    flex: 1;
+    padding: 2em;
+}
