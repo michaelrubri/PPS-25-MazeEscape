@@ -5,9 +5,12 @@ layout: default
 
 # Maze Escape
 
-Paradigmi di Programmazione e Sviluppo
+## Paradigmi di Programmazione e Sviluppo
+
 L.M. Ingeneria e Scienze Informatiche
+
 Alma mater Studiorum - Università di Bologna
+
 Campus di Cesena - Italia
 
 ## Autori
