@@ -1,15 +1,15 @@
 ---
 title: MazeEscape
-layout: default
+layout: home
 ---
 
 # Maze Escape
 
 ## Paradigmi di Programmazione e Sviluppo
 
-L.M. Ingeneria e Scienze Informatiche
+**L.M. Ingeneria e Scienze Informatiche**
 
-Alma mater Studiorum - Università di Bologna
+**Alma mater Studiorum - Università di Bologna**
 
 Campus di Cesena - Italia
 
