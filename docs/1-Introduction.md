@@ -3,6 +3,8 @@ layout: default
 title: Introduzione
 ---
 
+Per tornare alla [home](index.md)
+
 # Introduzione
 
 **Maze Escape** è un gioco strategico a turni in cui l'utente veste i panni di un utente umano che, ritrovatosi 

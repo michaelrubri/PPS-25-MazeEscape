@@ -3,6 +3,8 @@ layout: default
 title: Primo incontro
 ---
 
+Per tornare alla [home](../index.md)
+
 # Primo Incontro - 24/06/2025
 
 In questa sessione i membri del team si sono incontrati per discutere in modo più approfondito dell'idea di base, quindi

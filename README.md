@@ -10,6 +10,8 @@ accademico 2024/2025.
 
 ## Documentazione
 
+Documentazione del progetto disponibile [qui](docs/index.md)
+
 ---
 
 ## Autori
