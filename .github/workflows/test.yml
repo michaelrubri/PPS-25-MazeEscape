@@ -1,0 +1,44 @@
+name: Test Pull Request Develop to Main
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  test:
+    if: startsWith(github.head_ref, 'develop')
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        java: ['21', '17', '11']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+
+      - name: Install sbt via Coursier
+        uses: coursier/setup-action@v1
+        with:
+          jvm: "temurin:${{ matrix.java }}"
+          apps: "sbt"
+
+      - name: Cache sbt dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+            ${{ env.USERPROFILE }}\.ivy2\cache
+            ${{ env.USERPROFILE }}\.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+
+      - name: Run sbt tests
+        run: sbt clean test
