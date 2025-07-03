@@ -13,10 +13,14 @@ layout: home
 
 Campus di Cesena - Italia
 
+---
+
 ## Indice
-- [Introduzione](1-Introduction.md)
+- [Introduzione](0-Introduction)
 - [Primo Incontro](sprint/0-FirstMeeting.md)
 - [Primo Sprint](sprint/1-FirstSprint.md)
+
+---
 
 ## Autori
 - Michael Rubri - [michael.rubri@studio.unibo.it](mailto:michael.rubri@studio.unibo.it)
