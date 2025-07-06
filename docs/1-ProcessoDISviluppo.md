@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Primo incontro
+title: Processo di sviluppo
 ---
 
 Per tornare alla [home](index.md)
