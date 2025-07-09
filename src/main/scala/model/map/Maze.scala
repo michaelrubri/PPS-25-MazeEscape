@@ -7,12 +7,10 @@ package model.map
 
 import scala.util.Random
 
-
 // The generic cell used to generate the maze
 
 abstract class Cell:
   def toString: String
-  def unlock(): Boolean = true
 
 
 case class WallCell() extends Cell:
@@ -21,20 +19,24 @@ case class WallCell() extends Cell:
 
 case class FloorCell() extends Cell:
   override def toString: String = " "
-
+  
 
 case class DoorCell(question: (String, Boolean)) extends Cell:
-  var isOpen: Boolean = false
-  override def toString: String = "D"
+  var open: Boolean = false
+  var locked: Boolean = false
+  var tries: Int = 3
+  override def toString: String = "->"
 
-  override def unlock(): Boolean =
-    println(s"Answer the question to continue: $question")
+   def unlock(): Boolean =
+    println(s"Answer the question to continue: $question") // if answer is wrong, tries--
     // la pregunta puede ser una tupla pregunta + bool
     // si no reponde bien, manda a perder una vida
-    isOpen = true
+    open = true
     true
 
-  def open(): Boolean = isOpen // maybe call unlock if not open?
+  def isOpen(): Boolean = open // maybe call unlock if not open?
+  
+ // def blockFor(): 
 
 
 
@@ -62,7 +64,7 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
   def isWalkable(position: (Int, Int)): Boolean =
     getCell(position._1, position._2) match
       case FloorCell => true
-      case door: DoorCell => door.open()
+      case door: DoorCell => door.isOpen()
       case _ => false
 
   def printMaze(): Unit =
@@ -70,6 +72,11 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
     for cell <- row do
       print(cell.toString)
     println()
+    
+  def isExit(position: (Int, Int)): Boolean =
+    getCell(position._1, position._2) match
+      case door: DoorCell => door.isOpen()
+      case _ => false
 /**
  * The companion object of class Maze. It has the responsibility to create the maze
  * and generates the guardians.
@@ -105,7 +112,7 @@ object Maze:
   
       // Entrance and Exit
       grid = grid.updated(1, grid(1).updated(0, FloorCell()))
-      grid = grid.updated(size - 2, grid(size - 2).updated(size - 1, DoorCell(question = ("is Paris Capital of France?", true))))
+      grid = grid.updated(size - 2, grid(size - 2).updated(size - 1, DoorCell(question = ("is Paris Capital of France?", true)))) // the question is an example
       
       Maze(size, grid)
   
