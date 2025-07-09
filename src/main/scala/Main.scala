@@ -6,3 +6,4 @@
 object Main extends App:
 
   println("Maze Escape")
+  
