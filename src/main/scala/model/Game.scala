@@ -6,7 +6,6 @@
 package model
 
 import model.map.{DoorCell, Maze}
-import model.puzzle
 import model.puzzle.{Puzzle, PuzzleRepository}
 import model.util.GameSettings
 import scala.compiletime.uninitialized
@@ -55,24 +54,25 @@ class Game(val settings: GameSettings):
       Right(())
     else Left("Invalid move")
 
-  private def isAdjacent(from: (Int, Int), to: (Int, Int)): Boolean =
-    val (dx, dy) = ((from._1 - to._1).abs, (from._2 - to._2).abs)
-    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
-
-  private def directionBetween(from: (Int, Int), to: (Int, Int)): Option[Direction] =
-    (to._1 - from._1, to._2 - from._2) match
-      case (1, 0) => Some(Direction.Right)
-      case (-1, 0) => Some(Direction.Left)
-      case (0, 1) => Some(Direction.Down)
-      case (0, -1) => Some(Direction.Up)
-      case _ => None
+  def openDoor(at: (Int, Int), userAnswer: String): Either[String, Unit] =
+    maze.getCell(at._1, at._2) match
+      case door: DoorCell if !door.isOpen =>
+        val solution = door.puzzle.checkAnswer(userAnswer)
+        if solution then
+          door.unlock()
+          Right(())
+        else
+          door.blockFor(settings.lockDoorInTurns)
+          Left("Puzzle failed")
+      case _: DoorCell => Left("Door is already opened")
+      case _ => Left("This is not a door")
 
   private def startLogicChallenge(): Puzzle =
     val puzzle = PuzzleRepository.randomPuzzle()
     currentPuzzle = Some(puzzle)
     puzzle
 
-  def attemptFightLogic(answer: String): Either[String, Unit] =
+  def fightLogic(answer: String): Either[String, Unit] =
     val puzzle = startLogicChallenge()
     currentPuzzle match
       case Some(puzzle) if puzzle.checkAnswer(answer) =>
@@ -85,7 +85,7 @@ class Game(val settings: GameSettings):
         Left("Wrong answer, you lost a life")
       case None => Left("No active puzzle")
 
-  def attemptFightLuck(): Either[String, Unit] =
+  def fightLuck(): Either[String, Unit] =
     val win = Random.nextBoolean()
     if win then
       player.addScore(20)
@@ -93,3 +93,18 @@ class Game(val settings: GameSettings):
     else
       player.loseLife()
       Left("You were unlucky, you lost the fight")
+
+  def guardianAtPlayer(): List[Guardian] =
+    guardians.filter(guardian => isAdjacent(guardian.position, player.position))
+
+  private def isAdjacent(from: (Int, Int), to: (Int, Int)): Boolean =
+    val (dx, dy) = ((from._1 - to._1).abs, (from._2 - to._2).abs)
+    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
+
+  private def directionBetween(from: (Int, Int), to: (Int, Int)): Option[Direction] =
+    (to._1 - from._1, to._2 - from._2) match
+      case (1, 0) => Some(Direction.Right)
+      case (-1, 0) => Some(Direction.Left)
+      case (0, 1) => Some(Direction.Down)
+      case (0, -1) => Some(Direction.Up)
+      case _ => None

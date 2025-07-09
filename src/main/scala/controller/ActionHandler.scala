@@ -34,13 +34,13 @@ object UserAction:
    *
    * @param pos position of the door.
    */
-  case class AttemptOpenDoor(pos: (Int, Int)) extends UserAction
+  case class AttemptOpenDoor(pos: (Int, Int), answer: String) extends UserAction
 
   /**
    * Represents the challenge with a guardian
    * based on solving a logical problem.
    */
-  case object FightLogic extends UserAction
+  case class FightLogic(answer: String) extends UserAction
 
   /**
    * Represents the challenge with a guardian
