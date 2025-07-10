@@ -7,7 +7,8 @@ sealed trait Puzzle:
   def id: Int
   def question: String
   def solutions: List[String]
-
+  var used: Boolean
+  
   /**
    * Checks if the given answer is correct.
    *
@@ -15,6 +16,8 @@ sealed trait Puzzle:
    * @return true if the answer is correct, false otherwise.
    */
   def checkAnswer(answer: String): Boolean = solutions.contains(answer)
+
+    
 
 /**
  * The following case classes are different puzzle types.
@@ -30,7 +33,8 @@ sealed trait Puzzle:
 case class LogicPuzzle(
                         id: Int,
                         question: String,
-                        solutions: List[String]
+                        solutions: List[String],
+                        var used: Boolean = false
                       ) extends Puzzle
 
 /**
@@ -43,5 +47,6 @@ case class LogicPuzzle(
 case class RiddlePuzzle(
                          id: Int,
                          question: String,
-                         solutions: List[String]
+                         solutions: List[String],
+                         var used: Boolean = false
                        ) extends Puzzle

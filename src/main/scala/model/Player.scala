@@ -8,6 +8,7 @@ package model
 /**
  * Represents the direction where the player wants to move.
  */
+
 enum Direction:
   case Up, Left, Down, Right
 

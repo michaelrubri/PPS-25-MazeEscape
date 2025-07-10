@@ -7,7 +7,9 @@ import scala.util.Random
  */
 object PuzzleRepository:
 
-  private val puzzles: Vector[Puzzle] = Vector(
+  var USED = 0
+  
+  private val allPuzzles: Vector[Puzzle] = Vector(
     LogicPuzzle(
       1,
       "Five people were eating apples,\n" +
@@ -51,13 +53,40 @@ object PuzzleRepository:
       "Yet golden treasure inside is hid.",
       List("Egg"))
   )
+  
+  private var availablePuzzles: Vector[Puzzle] = allPuzzles
 
   /**
    * Randomly selects a puzzle from the existing ones.
    *
    * @return the puzzle chosen from those available.
    */
-  def randomPuzzle(): Puzzle = puzzles(Random.nextInt(puzzles.size))
+  def randomPuzzle(): Puzzle = {
+    if (availablePuzzles.isEmpty) {
+      resetPuzzles()
+    }
+
+    val randomIndex = Random.nextInt(availablePuzzles.size)
+    val selectedPuzzle = availablePuzzles(randomIndex)
+
+    // Marked as used
+    selectedPuzzle.used = true
+    availablePuzzles = availablePuzzles.filterNot(_ == selectedPuzzle)
+
+    selectedPuzzle
+  }
+
+  /**
+   * Resets all the puzzles to NOT USED
+   */
+  private def resetPuzzles(): Unit = {
+    allPuzzles.foreach(_.used = false)
+    availablePuzzles = allPuzzles
+  }
+
+      
+    
+        
 
   /**
    * Selects the puzzle by the identifier.
@@ -65,4 +94,4 @@ object PuzzleRepository:
    * @param id numeric identifier.
    * @return the puzzle associated with the identifier if exists, none otherwise.
    */
-  def getById(id: Int): Option[Puzzle] = puzzles.find(_.id == id)
+  def getById(id: Int): Option[Puzzle] = allPuzzles.find(_.id == id)

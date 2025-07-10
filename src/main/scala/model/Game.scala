@@ -67,7 +67,7 @@ class Game(val settings: GameSettings):
       case _: DoorCell => Left("Door is already opened")
       case _ => Left("This is not a door")
 
-  private def startLogicChallenge(): Puzzle =
+  def startLogicChallenge(): Puzzle =
     val puzzle = PuzzleRepository.randomPuzzle()
     currentPuzzle = Some(puzzle)
     puzzle
@@ -97,7 +97,7 @@ class Game(val settings: GameSettings):
   def guardianAtPlayer(): List[Guardian] =
     guardians.filter(guardian => isAdjacent(guardian.position, player.position))
 
-  private def isAdjacent(from: (Int, Int), to: (Int, Int)): Boolean =
+  def isAdjacent(from: (Int, Int), to: (Int, Int)): Boolean =
     val (dx, dy) = ((from._1 - to._1).abs, (from._2 - to._2).abs)
     (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
 
