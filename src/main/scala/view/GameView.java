@@ -108,7 +108,7 @@ public class GameView extends JFrame implements View  {
     }
 
     private void tryMoveTo(int x, int y) {
-        game.movePlayerTo((x, y))
+        game.movePlayerTo((x, y));
         if (maze.isExit((x, y))) {
             showMessage("You have exited!");
             System.exit(0);
