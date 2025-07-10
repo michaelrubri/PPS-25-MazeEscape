@@ -67,7 +67,7 @@ class Game(val settings: GameSettings):
       case _: DoorCell => Left("Door is already opened")
       case _ => Left("This is not a door")
 
-  private def startLogicChallenge(): Puzzle =
+  def startLogicChallenge(): Puzzle =
     val puzzle = PuzzleRepository.randomPuzzle()
     currentPuzzle = Some(puzzle)
     puzzle
