@@ -1,27 +1,88 @@
 package controller
 
-import model.{Game, Guardian}
-import model.map.{DoorCell, FloorCell, Maze}
+import model.Game
+import model.map.{DoorCell, FloorCell}
+import view.GameView
 
-class GameController(/*view: GameView,*/ game: Game, maze: Maze) extends UserActionHandler:
+class Controller(view: GameView, game: Game) extends UserActionHandler:
 
-  override def onAction(action: UserAction): Unit =
-    action match
-      case UserAction.ClickCell(pos) =>
-        // logica di routing: spostamento, apertura porta o incontro
-        def handleClick(pos: (Int, Int)): Unit =
-          maze.getCell(pos._1, pos._2) match
-            case _: FloorCell    => onAction(UserAction.AttemptMove(pos))
-            case _: DoorCell     => onAction(UserAction.AttemptOpenDoor(pos))
-            case _: Guardian     =>
-              // bisogna implementare anche la view
-              view.showFightChoice { choice =>
-                val cmd = if choice == "logic" then UserAction.FightLogic else UserAction.FightLuck
-                onAction(cmd)
-              }
+  view.updateView()
 
-      case UserAction.AttemptMove(pos) =>
-        game.movePlayerTo(pos)
-        view.render(game)
+  override def onAction(action: UserAction): Unit = action match
+    case UserAction.ClickCell(position) => handleClick(position)
 
-// altri metodi in actionHandler
+    case UserAction.AttemptMove(position) =>
+      game.movePlayerTo(position) match
+        case Right(_) =>
+          game.updateGameState()
+          view.updateView()
+        case Left(error) =>
+          view.showMessage(error)
+
+    case UserAction.AttemptOpenDoor(position, answer) =>
+      game.openDoor(position, answer) match
+        case Right(_) =>
+          game.updateGameState()
+          view.updateView()
+        case Left(err) =>
+          view.showMessage(err)
+
+    case UserAction.FightLogic(ans) =>
+      game.fightLogic(ans) match
+        case Right(_) =>
+          view.showMessage("Guardian defeated!")
+          view.updateView()
+        case Left(err) =>
+          view.showMessage(err)
+          view.updateView()
+
+    case UserAction.FightLuck =>
+      game.fightLuck() match
+        case Right(_) =>
+          view.showMessage("You are lucky, you have won!")
+          view.updateView()
+        case Left(err) =>
+          view.showMessage(err)
+          view.updateView()
+
+    case UserAction.Restart =>
+      game.startGame()
+      view.updateView()
+
+    case controller.UserAction.InvalidAction(_) => ???
+  
+  
+  private def handleClick(pos: (Int, Int)): Unit =
+    game.maze.getCell(pos._1, pos._2) match
+
+      case _: FloorCell => onAction(UserAction.AttemptMove(pos))
+
+      case door: DoorCell if !door.isOpen =>
+        view.showPuzzle(
+          door.puzzle.question,
+          answer => {
+            onAction(UserAction.AttemptOpenDoor(pos, answer))
+            scala.runtime.BoxedUnit.UNIT
+          }
+        )
+
+      case _: DoorCell => view.showMessage("Door is already open")
+
+      case _ if game.guardianAtPlayer().nonEmpty =>
+    view.showFightChoice { choice =>
+      if choice == "logic" then
+        val puzzle = game.startLogicChallenge()
+        view.showPuzzle(
+          puzzle.question,
+          (userAns: String) => {
+            onAction(UserAction.FightLogic(userAns))
+            scala.runtime.BoxedUnit.UNIT
+          }
+        )
+      else
+        onAction(UserAction.FightLuck)
+
+      scala.runtime.BoxedUnit.UNIT 
+    }
+    
+    
