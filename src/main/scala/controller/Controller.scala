@@ -3,10 +3,22 @@ package controller
 import model.Game
 import model.map.{DoorCell, FloorCell}
 import view.GameView
+import view.utils.*
 
 class Controller(view: GameView, game: Game) extends UserActionHandler:
 
   view.updateView()
+  initEventBus()
+  
+  private def initEventBus(): Unit = 
+    EventBus.subscribe { event =>
+      event match 
+        case clickEvent: CellClickEvent =>
+          val position = (clickEvent.getX, clickEvent.getY)
+          onAction(UserAction.ClickCell(position))
+        case _ => 
+      
+    }
 
   override def onAction(action: UserAction): Unit = action match
     case UserAction.ClickCell(position) => handleClick(position)

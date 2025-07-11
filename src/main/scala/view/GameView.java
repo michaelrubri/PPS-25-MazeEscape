@@ -10,15 +10,15 @@ import java.util.Map;
 import model.Player;
 import scala.Function1;
 import scala.Tuple2;
-import model.puzzle.*;
 import scala.runtime.BoxedUnit;
+import view.utils.*;
 
 public class GameView extends JFrame implements View  {
 
     private final Map<Pair<Integer, Integer>, JButton> buttons = new HashMap<>();
-    private final Game game;
-    private final Maze maze;
-    private final Player player;
+    private Game game;
+    private Maze maze;
+    private Player player;
 
     public GameView(Game game) {
         this.game = game;
@@ -38,12 +38,11 @@ public class GameView extends JFrame implements View  {
                 JButton button = new JButton();
 
                 // Add button only if we can move there
-                if (cell instanceof FloorCell || cell instanceof DoorCell) {
+                if (maze.isWalkable(new scala.Tuple2<>(x, y))) {
                     final int fx = x;
                     final int fy = y;
-                    button.addActionListener(e -> tryMoveTo(fx, fy));
                     button.addActionListener(e -> {
-                        EventBus.post(new CellClickEvent(x, y));  // Dispara el evento
+                        EventBus.publish(new CellClickEvent(fx, fy));  
                     });
                     buttons.put(new Pair<>(x, y), button);
                 }
@@ -80,7 +79,8 @@ public class GameView extends JFrame implements View  {
 
                     // Enable buttons only if adjacent
                     
-                    if (game.isAdjacent((x, y), (xP, yP)) && maze.isWalkable((x, y))) {}  
+                    if (game.isAdjacent(new scala.Tuple2<>(x, y), new scala.Tuple2<>(xP, yP)) &&
+                            maze.isWalkable(new scala.Tuple2<>(x, y)))  
                         btn.setEnabled(true);
                     else 
                         btn.setEnabled(false);
@@ -106,15 +106,7 @@ public class GameView extends JFrame implements View  {
     public void showFightChoice(Function1<String, BoxedUnit> choice) {
 
     }
-
-    private void tryMoveTo(int x, int y) {
-        game.movePlayerTo((x, y));
-        if (maze.isExit((x, y))) {
-            showMessage("You have exited!");
-            System.exit(0);
-        }
-
-    }
+    
 
     @Override
     public void showPuzzle(String question, Function1<String, BoxedUnit> answer) {
@@ -125,20 +117,7 @@ public class GameView extends JFrame implements View  {
                 JOptionPane.QUESTION_MESSAGE
         );
 
-        // Verify
-        if (usersAnswer != null) {  // Si el usuario no cancela
-            
-            boolean isCorrect = answer.apply(usersAnswer);//puzzle.checkAnswer(usersAnswer.trim().toLowerCase());
-
-            if (isCorrect) {
-                showMessage("Correct!"); 
-                //unlock
-            } else {
-                showMessage("Wrong aswer...");
-                //lock
-                );
-            }
-        }
+        answer.apply(usersAnswer);
     }
 
 }
