@@ -5,31 +5,52 @@
 
 package model
 
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.*
 import scala.compiletime.uninitialized
 
 class GuardianTest:
 
   var guardian: Guardian = uninitialized
 
-  @Before
-  def init(): Unit =
-    guardian = Guardian((0, 0))
+  @BeforeEach
+  def init(): Unit = guardian = Guardian((0, 0))
 
   @Test
-  def testInitialValues(): Unit =
-    assertEquals((0, 0), guardian.position)
+  def testInitialValues(): Unit = assertEquals((0, 0), guardian.position)
 
   @Test
-  def testIntercept(): Unit =
-    guardian.intercept((4, 4))
-    assertEquals((0, 1), guardian.position)
-    guardian.intercept((5, 4))
-    assertEquals((1, 1), guardian.position)
-    guardian.intercept((5, 5))
-    assertEquals((1, 2), guardian.position)
-    guardian.intercept((5, 4))
-    assertEquals((2, 2), guardian.position)
-    guardian.intercept((6, 4))
-    assertEquals((3, 2), guardian.position)
+  def testInterceptWhenGuardianAdjacentPlayer(): Unit =
+    val adjacentHorizontally = guardian.intercept(1, 0)
+    assertEquals((0, 0), adjacentHorizontally,"Guardian should not move")
+    val adjacentVertically = guardian.intercept(0, 1)
+    assertEquals((0, 0), adjacentVertically, "Guardian should not move")
+    val adjacentDiagonally = guardian.intercept((1, 1))
+    assertEquals((0, 0), adjacentDiagonally, "Guardian should not move")
+
+  @Test
+  def testInterceptHorizontally(): Unit =
+    val moveRight = guardian.intercept(3, 0)
+    assertEquals((1, 0), moveRight, "Guardian should move to the right")
+    val moveLeft = guardian.intercept(-3, 0)
+    assertEquals((-1, 0), moveLeft, "Guardian should move to the left")
+
+  @Test
+  def testInterceptVertically(): Unit =
+    val moveUp = guardian.intercept(0, 3)
+    assertEquals((0, 1), moveUp, "Guardian should move to the top")
+    val moveDown = guardian.intercept(0, -3)
+    assertEquals((0, -1), moveDown, "Guardian should move to the bottom")
+
+  @Test
+  def testInterceptDiagonally(): Unit =
+    val moveDiagonallyRightTop = guardian.intercept(2, 2)
+    assertEquals((1, 1), moveDiagonallyRightTop, "Guardian should move to the right-top")
+    val moveDiagonallyLeftBottom = guardian.intercept(-2, -2)
+    assertEquals((-1, -1), moveDiagonallyLeftBottom, "Guardian should move to the left-bottom")
+
+  @Test
+  def testUpdatePosition(): Unit =
+    val position = (1,1)
+    guardian.updatePosition(position)
+    assertEquals(position, guardian.position, "The guardian should be in the new position")
