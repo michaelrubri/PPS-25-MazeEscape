@@ -62,6 +62,7 @@ L'utente deve poter essere in grado di:
 ## Requisiti implementativi
 
 1) Scala versione 3.x.
-2) JUnit e ScalaTest.
-3) GitHub e GitHub Actions.
-4) IntelliJ IDEA e SBT.
+2) JavaFx.
+3) JUnit e ScalaTest.
+4) GitHub e GitHub Actions. 
+5) IntelliJ IDEA e SBT.

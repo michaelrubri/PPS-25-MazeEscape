@@ -47,9 +47,10 @@ Deadline sprint: 11/07/2025
 - Implementazione delle entità Player e Guardian.
 - Implementazione dello stato di gioco.
 - Implementazione delle azioni eseguibili dall'utente.
-- Sviluppo di un InputHandler per gestire le mosse dell'utente.
+- Sviluppo di un modulo necessario per la generazione degli enigmi.
 
 **Candela Esparrica Torrecilla:**
 - Sviluppo del labirinto e delle sue componentistiche.
 - Studio degli algoritmi per la generazione procedurale della mappa.
+- Sviluppo del game controller.
 - Sviluppo della GUI.

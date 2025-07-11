@@ -16,9 +16,9 @@ Campus di Cesena - Italia
 ---
 
 ## Indice
-- [Introduzione](0-Introduction)
-- [Primo Incontro](sprint/0-FirstMeeting.md)
-- [Primo Sprint](sprint/1-FirstSprint.md)
+- [Introduzione](0-Introduzione)
+- [Primo Incontro](sprint/0-PrimoIncontro)
+- [Primo Sprint](sprint/1-PrimoSprint)
 
 ---
 
