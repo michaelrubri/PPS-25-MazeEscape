@@ -12,7 +12,7 @@ import scala.compiletime.uninitialized
 import scala.util.Random
 
 class Game(val settings: GameSettings):
-  val maze: Maze = Maze.generate(settings.mazeSize)
+  //val maze: Maze = Maze.generate(settings.mazeSize)
   val player: Player = Player((0, 0), settings.numLives, 0)
   val guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{ case (x, y) => Guardian(x, y)}
   private var currentTurn: Int = uninitialized
@@ -20,7 +20,7 @@ class Game(val settings: GameSettings):
   private var isVictory: Boolean = uninitialized
   private var currentPuzzle: Option[Puzzle] = uninitialized
 
-  given instanceMaze: Maze = maze
+  given maze: Maze = Maze.generate(settings.mazeSize)
 
   def startGame(): Unit =
     currentTurn = 0
@@ -29,16 +29,18 @@ class Game(val settings: GameSettings):
     currentPuzzle = None
 
   def updateGameState(): Unit =
-    if isFinished then return
-
-    guardians.foreach(_.intercept(player.position))
+    // if isFinished then return
+    require(!isFinished)
+    val entitiesPositionAfterTurn = guardians.foldLeft(Set(player.position)) { (occupied, guardian) =>
+      val newPosition = guardian.intercept(player.position)
+      if maze.isWalkable(newPosition) && !occupied(newPosition) then guardian.updatePosition(newPosition)
+      occupied + guardian.position
+    }
     currentTurn += 1
-
     isFinished =
       player.lives <= 0 ||
       currentTurn >= settings.maxDuration ||
       maze.isExit(player.position)
-
     isVictory = maze.isExit(player.position)
       
   def endGame(): Boolean =
@@ -99,7 +101,7 @@ class Game(val settings: GameSettings):
 
   def isAdjacent(from: (Int, Int), to: (Int, Int)): Boolean =
     val (dx, dy) = ((from._1 - to._1).abs, (from._2 - to._2).abs)
-    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
+    (dx <= 1 && dy <= 1) && (dx != 0 || dy != 0)
 
   private def directionBetween(from: (Int, Int), to: (Int, Int)): Option[Direction] =
     (to._1 - from._1, to._2 - from._2) match
