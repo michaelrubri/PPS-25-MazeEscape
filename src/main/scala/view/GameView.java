@@ -1,8 +1,7 @@
 package view;
 
 import model.Game;
-import model.map.*; // importa tus celdas y Maze aquí
-
+import model.map.*;
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
