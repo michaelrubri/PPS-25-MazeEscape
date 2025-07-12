@@ -94,7 +94,8 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
   def isWalkable(position: (Int, Int)): Boolean =
     getCell(position._1, position._2) match
       case _: FloorCell   => true
-      case door: DoorCell => door.isOpen
+      case door: DoorCell => true
+      case _: WallCell => false
       case _              => false
 
   /**
@@ -113,6 +114,18 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
     for cell <- row do
       print(cell.toString)
     println()
+
+  def randomFloorCell(): (Int, Int) = {
+    val rand = new scala.util.Random()
+    val floorCells = for {
+      y <- 0 until size
+      x <- 0 until size
+      if grid(x)(y).isInstanceOf[FloorCell]
+    } yield (x, y)
+
+    floorCells(rand.nextInt(floorCells.length))
+  }
+
       
 /**
  * The companion object of class Maze. It has the responsibility to create the maze
@@ -120,7 +133,7 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
  */
 object Maze:
 
-  /*def generate(size: Int): Maze = {
+  def generate(size: Int): Maze = {
 
     val rand = new scala.util.Random()
     var grid = Vector.fill(size, size)(WallCell(): Cell)
@@ -147,23 +160,27 @@ object Maze:
 
 
     // Generamos múltiples puntos de inicio para mejor conectividad
-    val startPoints = List((1, 1), (size - 2, size - 2), (1, size - 2), (size - 2, 1))
+   /* val startPoints = List((1, 1), (size - 2, size - 2), (1, size - 2), (size - 2, 1))
     startPoints.foreach { case (x, y) =>
       if isInBounds(x, y) && grid(y)(x) == WallCell() then carve(x, y)
     }
+    */
+    carve(size - 1, size - 2)
+
+
 
     // Aseguramos entrada y salida conectadas
-    grid = grid.updated(1, grid(1).updated(0, FloorCell())) // Entrada
+    //grid = grid.updated(1, grid(1).updated(0, FloorCell())) // Entry
 
-    // Conectamos la salida al laberinto principal
-    val exitX = size - 2
+    // Conecting exit with the FloorCells
+    val exitX = size - 1
     val exitY = size - 2
     if (grid(exitY)(exitX) == WallCell()) {
-      // Buscamos celdas adyacentes conectadas
       val adjacent = List((exitX - 1, exitY), (exitX, exitY - 1))
         .filter { case (x, y) => isInBounds(x, y) && grid(y)(x) == FloorCell() }
 
       if (adjacent.nonEmpty) {
+
         val (connX, connY) = adjacent.head
         grid = grid.updated(exitY, grid(exitY).updated(exitX, FloorCell()))
         grid = grid.updated(connY, grid(connY).updated(connX, FloorCell()))
@@ -174,11 +191,11 @@ object Maze:
       DoorCell(PuzzleRepository.randomPuzzle())))
 
     new Maze(size, grid)
-  }*/
+  }
 
 
 
-  def generate(size: Int): Maze = {
+ /* def generate(size: Int): Maze = {
 
     val rand = new scala.util.Random()
     var grid = Vector.tabulate(size, size)((x, y) =>
@@ -224,7 +241,7 @@ object Maze:
       DoorCell(PuzzleRepository.randomPuzzle())) )// Salida (size-1, size-2)
 
     new Maze(size, grid)
-  }
+  }*/
 
   /**
    * Generates guardian entities randomly on the map.

@@ -12,6 +12,7 @@ import controller.*
 object Main extends App:
 
   println("Maze Escape")
+
   private val gameSettings: GameSettings = GameSettings.fromDifficulty("easy")
   private val game: Game = Game(gameSettings)
   private val view: GameView = GameView(game)

@@ -13,7 +13,7 @@ import scala.util.Random
 
 class Game(val settings: GameSettings):
   given maze: Maze = Maze.generate(settings.mazeSize)
-  val player: Player = Player((0, 0), settings.numLives, 0)
+  val player: Player = Player(maze.randomFloorCell(), settings.numLives, 0)
   val guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{ case (x, y) => Guardian(x, y)}
   private var currentTurn: Int = uninitialized
   private var isFinished: Boolean = uninitialized
@@ -102,7 +102,7 @@ class Game(val settings: GameSettings):
 
   def isAdjacent(from: (Int, Int), to: (Int, Int)): Boolean =
     val (dx, dy) = ((from._1 - to._1).abs, (from._2 - to._2).abs)
-    (dx <= 1 && dy <= 1) && (dx != 0 || dy != 0)
+    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
 
   private def directionBetween(from: (Int, Int), to: (Int, Int)): Option[Direction] =
     (to._1 - from._1, to._2 - from._2) match

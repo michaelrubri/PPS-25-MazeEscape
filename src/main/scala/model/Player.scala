@@ -63,8 +63,8 @@ private case class PlayerImpl(private var _position: (Int, Int),
   override def score: Int = _score
   override def move(direction: Direction): Unit =
     direction match
-      case Direction.Up => _position = (_position._1, _position._2 + 1)
-      case Direction.Down => _position = (_position._1, _position._2 - 1)
+      case Direction.Up => _position = (_position._1, _position._2 - 1)
+      case Direction.Down => _position = (_position._1, _position._2 + 1)
       case Direction.Left => _position = (_position._1 - 1, _position._2)
       case Direction.Right => _position = (_position._1 + 1, _position._2)
   override def loseLife(): Unit = _lives -= 1
