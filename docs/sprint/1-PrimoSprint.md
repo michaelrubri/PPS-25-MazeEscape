@@ -47,10 +47,27 @@ Deadline sprint: 11/07/2025
 - Implementazione delle entità Player e Guardian.
 - Implementazione dello stato di gioco.
 - Implementazione delle azioni eseguibili dall'utente.
-- Sviluppo di un modulo necessario per la generazione degli enigmi.
+- Sviluppo di un modulo per la generazione degli enigmi.
 
 **Candela Esparrica Torrecilla:**
 - Sviluppo del labirinto e delle sue componentistiche.
 - Studio degli algoritmi per la generazione procedurale della mappa.
 - Sviluppo del game controller.
 - Sviluppo della GUI.
+
+## Revisione dello sprint - 11/07/2025
+
+I seguenti obiettivi sono stati conseguiti come preventivato:
+1) Setup del progetto completato
+2) Implementazione GitHub Actions per automatizzare i test. 
+3) Generazione entità Player e Guardian. 
+4) Implementazione stato di gioco. 
+5) Definizione delle azioni eseguibili dall'utente
+6) Implementazione del modulo relativo agli enigmi.
+7) Sviluppo e generazione del labirinto.
+8) Implementazione del game controller.
+
+L'ultimo obiettivo relativo allo sviluppo della GUI non è stato conseguito totalmente. Il progetto allo stato attuale
+presenta un'interfaccia grafica sviluppata in Java ma il progetto non risulta essere compilabile a causa di alcune
+incompatibilità tra la GUI e la generazione della mappa. Il team ha dunque valutato di posticipare tale obiettivo nello
+sprint successivo e migrare l'interfaccia da JavaFx a ScalaFx.
