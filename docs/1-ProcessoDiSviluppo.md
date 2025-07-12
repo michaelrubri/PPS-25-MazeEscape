@@ -60,7 +60,7 @@ Per supportare il processo di sviluppo agile, il team utilizza strumenti volti a
 processo.
 
 ### Automazione
-Il progetto ha integrato pratiche moderne per la manutenzione continua del sistema, definita continuous integration
+Il progetto ha integrato pratiche moderne per la manutenzione continua del sistema definita continuous integration
 (CI). Il workflow test.yml esegue i test su ogni pull-request aperta o sincronizzata a partire dal branch develop verso
 il branch main. Questo flusso garantisce l’integrità del sistema e da la possibilità al proprietario del repository e
 agli eventuali collaboratori e sviluppatori di avere una visione completa del progetto e delle eventuali problematiche a

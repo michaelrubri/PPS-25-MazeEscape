@@ -16,9 +16,13 @@ Campus di Cesena - Italia
 ---
 
 ## Indice
-- [Introduzione](0-Introduzione)
-- [Primo Incontro](sprint/0-PrimoIncontro)
-- [Primo Sprint](sprint/1-PrimoSprint)
+- [Introduzione](0-Introduzione.md)
+- [Processo di sviluppo](1-ProcessoDiSviluppo.md)
+- [Requisiti](2-Requisiti.md)
+- [Architettura](3-Architettura.md)
+- [Primo Incontro](sprint/0-PrimoIncontro.md)
+- [Primo Sprint](sprint/1-PrimoSprint.md)
+- [Secondo Sprint](sprint/2-SecondoSprint.md)
 
 ---
 
