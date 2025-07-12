@@ -13,10 +13,14 @@ funzionante, da poter consegnare al committente in modo che possa verificare con
 del suo investimento. Per questo motivo nel primo rilascio saranno sviluppate parzialmente alcune caratteristiche per
 rispettare le scadenze temporali e alcune saranno aggiunte solo successivamente come estensione a un sistema funzionante.
 
+---
+
 ## Architettura
 
 Data la natura del problema il team ha scelto MVC (Model-View-Controller) come architettura, in quanto supporta
 totalmente l'idea del progetto.
+
+---
 
 ## Obiettivi Sprint
 
@@ -33,6 +37,8 @@ totalmente l'idea del progetto.
 - Implementazione del controller per gestire l'input dell'utente e propagare gli eventi generati da quest'ultimo.
 - Implementazione della view.
 
+---
+
 ## Planning & Comunicazione
 
 - Incontri frequenti con cadenza giornaliera.
@@ -40,6 +46,8 @@ totalmente l'idea del progetto.
 - Comunicazione continua e confronto immediato.
 
 Deadline sprint: 11/07/2025
+
+---
 
 ## Divisione del lavoro
 
@@ -54,6 +62,8 @@ Deadline sprint: 11/07/2025
 - Studio degli algoritmi per la generazione procedurale della mappa.
 - Sviluppo del game controller.
 - Sviluppo della GUI.
+
+---
 
 ## Revisione dello sprint - 11/07/2025
 
