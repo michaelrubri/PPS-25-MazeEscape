@@ -74,7 +74,8 @@ public class GameView extends JFrame implements View  {
                     btn.setText(" "); // not sure we need this
                     
                     if(cell instanceof FloorCell)  btn.setBackground(Color.WHITE);
-                    else if (cell instanceof WallCell)  btn.setBackground(Color.BLACK);
+                    else if (cell instanceof WallCell) btn.setBackground(Color.ORANGE);
+                        
                     else btn.setBackground(Color.YELLOW);
 
                     // Enable buttons only if adjacent
