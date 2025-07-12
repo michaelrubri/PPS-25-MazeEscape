@@ -12,7 +12,7 @@ import scala.compiletime.uninitialized
 import scala.util.Random
 
 class Game(val settings: GameSettings):
-  //val maze: Maze = Maze.generate(settings.mazeSize)
+  given maze: Maze = Maze.generate(settings.mazeSize)
   val player: Player = Player((0, 0), settings.numLives, 0)
   val guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{ case (x, y) => Guardian(x, y)}
   private var currentTurn: Int = uninitialized
@@ -20,28 +20,29 @@ class Game(val settings: GameSettings):
   private var isVictory: Boolean = uninitialized
   private var currentPuzzle: Option[Puzzle] = uninitialized
 
-  given maze: Maze = Maze.generate(settings.mazeSize)
-
   def startGame(): Unit =
     currentTurn = 0
     isFinished = false
     isVictory = false
     currentPuzzle = None
 
+  private inline def unless(condition: => Boolean)(block: => Unit): Unit =
+    if !condition then block
+
   def updateGameState(): Unit =
-    // if isFinished then return
-    require(!isFinished)
-    val entitiesPositionAfterTurn = guardians.foldLeft(Set(player.position)) { (occupied, guardian) =>
-      val newPosition = guardian.intercept(player.position)
-      if maze.isWalkable(newPosition) && !occupied(newPosition) then guardian.updatePosition(newPosition)
-      occupied + guardian.position
+    unless(isFinished) {
+      val entitiesPositionAfterTurn = guardians.foldLeft(Set(player.position)) { (occupied, guardian) =>
+        val newPosition = guardian.intercept(player.position)
+        if maze.isWalkable(newPosition) && !occupied(newPosition) then guardian.updatePosition(newPosition)
+        occupied + guardian.position
+      }
+      currentTurn += 1
+      isFinished =
+        player.lives <= 0 ||
+          currentTurn >= settings.maxDuration ||
+          maze.isExit(player.position)
+      isVictory = maze.isExit(player.position)
     }
-    currentTurn += 1
-    isFinished =
-      player.lives <= 0 ||
-      currentTurn >= settings.maxDuration ||
-      maze.isExit(player.position)
-    isVictory = maze.isExit(player.position)
       
   def endGame(): Boolean =
     isFinished = true
