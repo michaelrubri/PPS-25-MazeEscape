@@ -108,6 +108,6 @@ class Game(val settings: GameSettings):
     (to._1 - from._1, to._2 - from._2) match
       case (1, 0) => Some(Direction.Right)
       case (-1, 0) => Some(Direction.Left)
-      case (0, 1) => Some(Direction.Down)
-      case (0, -1) => Some(Direction.Up)
+      case (0, 1) => Some(Direction.Up)
+      case (0, -1) => Some(Direction.Down)
       case _ => None
