@@ -11,8 +11,6 @@ import scala.util.Random
  * All the possible puzzles are defined here.
  */
 object PuzzleRepository:
-
-  var USED = 0
   
   private val allPuzzles: Vector[Puzzle] = Vector(
     LogicPuzzle(
@@ -59,40 +57,25 @@ object PuzzleRepository:
       List("Egg"))
   )
   
-  private var availablePuzzles: Vector[Puzzle] = allPuzzles
+  private var availablePuzzles = allPuzzles
 
   /**
    * Randomly selects a puzzle from the existing ones.
    *
    * @return the puzzle chosen from those available.
    */
-  def randomPuzzle(): Puzzle = {
-    if (availablePuzzles.isEmpty) {
-      resetPuzzles()
-    }
-
+  def randomPuzzle(): Puzzle =
+    if availablePuzzles.isEmpty then resetPuzzles()
     val randomIndex = Random.nextInt(availablePuzzles.size)
     val selectedPuzzle = availablePuzzles(randomIndex)
-
-    // Marked as used
-    selectedPuzzle.used = true
     availablePuzzles = availablePuzzles.filterNot(_ == selectedPuzzle)
-
     selectedPuzzle
-  }
 
   /**
    * Resets all the puzzles to NOT USED
    */
-  private def resetPuzzles(): Unit = {
-    allPuzzles.foreach(_.used = false)
-    availablePuzzles = allPuzzles
-  }
-
-      
-    
-        
-
+  private def resetPuzzles(): Unit = availablePuzzles = allPuzzles
+  
   /**
    * Selects the puzzle by the identifier.
    *
