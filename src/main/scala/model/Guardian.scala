@@ -5,8 +5,6 @@
 
 package model
 
-import model.map.Maze
-
 /**
  * Represents the NPC character ruled by the system.
  */
@@ -44,5 +42,4 @@ private case class GuardianImpl(private var _position: (Int, Int)) extends Guard
       case (dx, dy) if dx.abs == dy.abs => (_position._1 + dx.sign, _position._2 + dy.sign)
       case (dx, dy) if dx.abs > dy.abs => (_position._1 + dx.sign, _position._2)
       case (_, dy) => (_position._1, _position._2 + dy.sign)
-
   override private[model] def updatePosition(newPosition: (Int, Int)): Unit = _position = newPosition
