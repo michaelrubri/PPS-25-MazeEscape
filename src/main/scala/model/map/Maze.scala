@@ -107,19 +107,18 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
   def isExit(position: (Int, Int)): Boolean =
     getCell(position._1, position._2) match
       case door: DoorCell => door.isOpen
-      case _              => false    
+      case _              => false
 
-  def printMaze(): Unit =
-  for row <- grid do
-    for cell <- row do
-      print(cell.toString)
-    println()
 
+  /**
+   *
+   * @return a FloorCell which is far away from the exit
+   */
   def randomFloorCell(): (Int, Int) = {
     val rand = new scala.util.Random()
     val floorCells = for {
-      y <- 0 until size
-      x <- 0 until size
+      y <- 0 until size/2
+      x <- 0 until size/2
       if grid(x)(y).isInstanceOf[FloorCell]
     } yield (x, y)
 
@@ -133,10 +132,10 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
  */
 object Maze:
 
-  def generate(size: Int): Maze = {
-
+  def generate(level: Int): Maze = {
+    val size = level*20
     val rand = new scala.util.Random()
-    var grid = Vector.fill(size, size)(WallCell(): Cell)
+    var grid = Vector.fill(size*40, size*40)(WallCell(): Cell)
 
     def isInBounds(x: Int, y: Int): Boolean =
       x >= 0 && y >= 0 && x < size && y < size
@@ -158,19 +157,7 @@ object Maze:
 
       }
 
-
-    // Generamos múltiples puntos de inicio para mejor conectividad
-   /* val startPoints = List((1, 1), (size - 2, size - 2), (1, size - 2), (size - 2, 1))
-    startPoints.foreach { case (x, y) =>
-      if isInBounds(x, y) && grid(y)(x) == WallCell() then carve(x, y)
-    }
-    */
     carve(size - 1, size - 2)
-
-
-
-    // Aseguramos entrada y salida conectadas
-    //grid = grid.updated(1, grid(1).updated(0, FloorCell())) // Entry
 
     // Conecting exit with the FloorCells
     val exitX = size - 1
@@ -192,57 +179,7 @@ object Maze:
 
     new Maze(size, grid)
   }
-
-
-
- /* def generate(size: Int): Maze = {
-
-    val rand = new scala.util.Random()
-    var grid = Vector.tabulate(size, size)((x, y) =>
-      if (x % 2 == 1 && y % 2 == 1) FloorCell() else WallCell()
-    )
-
-    // Algoritmo de Prim mejorado
-    val walls = collection.mutable.ArrayBuffer[(Int, Int, Int, Int)]()
-
-    // Generar paredes horizontales
-    for {
-      x <- 1 until size by 2
-      y <- 1 until size - 1 by 2
-    } walls += ((x, y, x, y + 2))
-
-    // Generar paredes verticales
-    for {
-      x <- 1 until size - 1 by 2
-      y <- 1 until size by 2
-    } walls += ((x, y, x + 2, y))
-
-    rand.shuffle(walls).foreach { case (x1, y1, x2, y2) =>
-      val (mx, my) = ((x1 + x2) / 2, (y1 + y2) / 2)
-      if (grid(y1)(x1) == FloorCell() ^ grid(y2)(x2) == FloorCell()) {
-        grid = grid.updated(my, grid(my).updated(mx, FloorCell()))
-        if (grid(y1)(x1) == WallCell()) grid = grid.updated(y1, grid(y1).updated(x1, FloorCell()))
-        if (grid(y2)(x2) == WallCell()) grid = grid.updated(y2, grid(y2).updated(x2, FloorCell()))
-      }
-    }
-
-    // Entrada y salida garantizadas
-    grid = grid.updated(1, grid(1).updated(0, FloorCell())) // Entrada (0,1)
-
-    // Conectar salida al laberinto
-    val exitX = size - 2
-    val exitY = size - 2
-    if (grid(exitY)(exitX) == WallCell()) {
-      grid = grid.updated(exitY, grid(exitY).updated(exitX, FloorCell()))
-      grid = grid.updated(exitY, grid(exitY).updated(exitX - 1, FloorCell()))
-    }
-
-    grid = grid.updated(exitY, grid(exitY).updated(size - 1,
-      DoorCell(PuzzleRepository.randomPuzzle())) )// Salida (size-1, size-2)
-
-    new Maze(size, grid)
-  }*/
-
+  
   /**
    * Generates guardian entities randomly on the map.
    *

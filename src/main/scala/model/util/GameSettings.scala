@@ -48,7 +48,7 @@ object GameSettings:
    */
   def fromDifficulty(difficulty: String): GameSettings =
     difficulty.toLowerCase match
-      case "easy" => GameSettings("Easy", maxDuration = 90, mazeSize = 20, numGuardians = 2, numLives = 3, lockDoorInTurns = 2)
+      case "easy" => GameSettings("Easy", maxDuration = 90, mazeSize = 1, numGuardians = 2, numLives = 3, lockDoorInTurns = 2)
       case "medium" => GameSettings("Medium", maxDuration = 130, mazeSize = 2, numGuardians = 2, numLives = 4, lockDoorInTurns = 3)
       case "hard" => GameSettings("Hard", maxDuration = 150, mazeSize = 3, numGuardians = 3, numLives = 5, lockDoorInTurns = 4)
       case unknown => throw IllegalArgumentException(s"Difficulty level unknown: $unknown")

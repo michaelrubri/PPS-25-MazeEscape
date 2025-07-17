@@ -6,14 +6,16 @@
 import model.map.Maze
 import model.*
 import model.util.GameSettings
-import view.*
+import view.{GameView, *}
 import controller.*
+import java.util.function.Consumer
 
 object Main extends App:
-
-  println("Maze Escape")
-
-  private val gameSettings: GameSettings = GameSettings.fromDifficulty("easy")
-  private val game: Game = Game(gameSettings)
-  private val view: GameView = GameView(game)
-  private val controller: Controller = Controller(view, game)
+     new MenuView(new Consumer[String] {
+       override def accept(difficulty: String): Unit = {
+         val gameSettings: GameSettings = GameSettings.fromDifficulty(difficulty)
+         val game: Game = Game(gameSettings)
+         val view: GameView = GameView(game)
+         val controller: Controller = Controller(view, game)
+       }
+     })

@@ -6,9 +6,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import model.Player;
+import model.*;
 import scala.Function1;
 import scala.Tuple2;
+import scala.collection.JavaConverters;
+import scala.collection.immutable.List;
 import scala.runtime.BoxedUnit;
 import view.utils.*;
 
@@ -18,11 +20,15 @@ public class GameView extends JFrame implements View  {
     private Game game;
     private Maze maze;
     private Player player;
+    private List<Guardian> guardians;
+    private Map<Pair<Integer, Integer>, Guardian> guardiansPosition;
 
     public GameView(Game game) {
         this.game = game;
         this.maze = game.maze();
         this.player = game.player();
+        this.guardians = game.guardians();
+        this.guardiansPosition = new HashMap<>();
 
         int size = maze.size();
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -62,23 +68,41 @@ public class GameView extends JFrame implements View  {
 
     public void updateView() {
         int size = maze.size();
-
+        
+        guardiansPosition.clear();
+        
+        // Convert Scala List to java
+        JavaConverters.seqAsJavaList(guardians).forEach(guardian -> {
+            Tuple2<Object, Object> pos = guardian.position();
+            Pair<Integer, Integer> position = new Pair<>(
+                    (Integer) pos._1(),
+                    (Integer) pos._2()
+            );
+            guardiansPosition.put(position, guardian);
+        });
+        
         Tuple2<Object, Object> posP = player.position();
-
-        // Cast to integer
         int xP = (Integer) posP._1();
         int yP = (Integer) posP._2();
-        System.out.println("xP: " + xP + " yP: " + yP);
+
+        buttons.values().forEach(btn -> btn.setText(" "));
+
+        // Drawing of the guardians
+        guardiansPosition.forEach((pos, guardian) -> {
+            JButton btn = buttons.get(pos);
+            btn.setText("G");
+            
+        });
+        
+        System.out.println("xP" + xP + " yP" + yP);
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 Pair<Integer, Integer> pos = new Pair<>(x, y);
-                // Button corresponding to the position
                 JButton btn = buttons.get(pos);
                 if (btn != null) {
                     if(x==xP && y==yP){
                         btn.setText("웃");
                     }
-                    else btn.setText(" ");
 
                     // Enable buttons only if adjacent
                     if (game.isAdjacent(new scala.Tuple2<>(x, y), new scala.Tuple2<>(xP, yP)) &&
@@ -117,5 +141,4 @@ public class GameView extends JFrame implements View  {
 
         answer.apply(usersAnswer);
     }
-
 }
