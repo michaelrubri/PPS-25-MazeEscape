@@ -32,9 +32,8 @@ Deadline sprint: 20/07/2025
 - Revisione codice entità Player e Guardian.
 - Estensione del comportamento dei Guardian.
 - Revisione del sistema a seguito di modifiche.
-- Sviluppo condiviso della view e migrazione da JavaFx a ScalaFx.
 
 **Candela Esparrica Torrecilla:**
 - Aggiornamento dell'algoritmo per lo sviluppo della mappa.
+- Estensione del comportamento dei Guardian.
 - Revisione del sistema a seguito di modifiche.
-- Sviluppo condiviso della view e migrazione da JavaFx a ScalaFx.

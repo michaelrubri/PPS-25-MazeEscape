@@ -10,18 +10,20 @@ package model.util
  *
  * @param difficulty difficulty level of the game.
  * @param maxDuration maximum duration of the game in turns.
- * @param mazeSize number of intermediate levels to overcome to get out of the maze.
+ * @param levels number of intermediate levels to overcome to get out of the maze.
+ * @param mazeSize maze's dimension.
  * @param numGuardians total number of guardians per level.
  * @param numLives number of player's lives.
  * @param lockDoorInTurns number of turns the user must wait if he fails to open the door.
  */
 class GameSettings(
-                  val difficulty: String,
-                  val maxDuration: Int,
-                  val mazeSize: Int,
-                  val numGuardians: Int,
-                  val numLives: Int,
-                  val lockDoorInTurns: Int
+                    val difficulty: String,
+                    val maxDuration: Int,
+                    val levels: Int,
+                    val mazeSize: Int,
+                    val numGuardians: Int,
+                    val numLives: Int,
+                    val lockDoorInTurns: Int
                   ):
 
   /**
@@ -32,6 +34,7 @@ class GameSettings(
   def getParameters: Map[String, Int] =
     Map(
       "maxDuration"     -> maxDuration,
+      "levels"          -> levels,
       "mazeSize"        -> mazeSize,
       "numGuardians"    -> numGuardians,
       "numLives"        -> numLives,
@@ -48,9 +51,9 @@ object GameSettings:
    */
   def fromDifficulty(difficulty: String): GameSettings =
     difficulty.toLowerCase match
-      case "easy" => GameSettings("Easy", maxDuration = 90, mazeSize = 1, numGuardians = 2, numLives = 3, lockDoorInTurns = 2)
-      case "medium" => GameSettings("Medium", maxDuration = 130, mazeSize = 2, numGuardians = 2, numLives = 4, lockDoorInTurns = 3)
-      case "hard" => GameSettings("Hard", maxDuration = 150, mazeSize = 3, numGuardians = 3, numLives = 5, lockDoorInTurns = 4)
+      case "easy" => GameSettings("Easy", maxDuration = 90, levels = 1, mazeSize = 20, numGuardians = 2, numLives = 3, lockDoorInTurns = 2)
+      case "medium" => GameSettings("Medium", maxDuration = 130, levels = 2, mazeSize = 20, numGuardians = 2, numLives = 4, lockDoorInTurns = 3)
+      case "hard" => GameSettings("Hard", maxDuration = 150, levels = 3, mazeSize = 20, numGuardians = 3, numLives = 5, lockDoorInTurns = 4)
       case unknown => throw IllegalArgumentException(s"Difficulty level unknown: $unknown")
 
   /**
@@ -58,18 +61,20 @@ object GameSettings:
    *
    * @param difficulty difficulty level of the game.
    * @param maxDuration maximum duration of the game in turns.
-   * @param mazeSize number of intermediate levels to overcome to get out of the maze.
+   * @param levels number of intermediate levels to overcome to get out of the maze.
+   * @param mazeSize maze's dimension.
    * @param numGuardians total number of guardians per level.
    * @param numLives number of player's lives.
    * @param lockDoorInTurns number of turns the user must wait if he fails to open the door.
    * @return the configured game settings class.
    */
   def apply(
-           difficulty: String,
-           maxDuration: Int,
-           mazeSize: Int,
-           numGuardians: Int,
-           numLives: Int,
-           lockDoorInTurns: Int
+             difficulty: String,
+             maxDuration: Int,
+             levels: Int,
+             mazeSize: Int,
+             numGuardians: Int,
+             numLives: Int,
+             lockDoorInTurns: Int
            ): GameSettings =
-    new GameSettings(difficulty, maxDuration, mazeSize, numGuardians, numLives, lockDoorInTurns)
+    new GameSettings(difficulty, maxDuration, levels, mazeSize, numGuardians, numLives, lockDoorInTurns)

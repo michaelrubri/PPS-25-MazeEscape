@@ -55,7 +55,7 @@ object Player:
   def apply(initialPosition: (Int, Int), initialLives: Int, initialScore: Int): Player =
     PlayerImpl(initialPosition, initialLives, initialScore)
 
-private case class PlayerImpl(private var _position: (Int, Int),
+private[model] case class PlayerImpl(private var _position: (Int, Int),
                               private var _lives: Int,
                               private var _score: Int) extends Player:
   override def position: (Int, Int) = _position
@@ -69,3 +69,12 @@ private case class PlayerImpl(private var _position: (Int, Int),
       case Direction.Right => _position = (_position._1 + 1, _position._2)
   override def loseLife(): Unit = _lives -= 1
   override def addScore(points: Int): Unit = _score += points
+  private[model] def setPosition(newPosition: (Int, Int)): Unit = _position = newPosition
+
+extension (p: Player)
+  private[model] def _setPosition(newPosition: (Int, Int)): Either[String, Unit] =
+    p match
+      case playerImpl: PlayerImpl =>
+        playerImpl.setPosition(newPosition)
+        Right(())
+      case other => Left(s"Expected PlayerImpl but got ${other.getClass.getName}")
