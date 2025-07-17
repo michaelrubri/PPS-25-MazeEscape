@@ -3,7 +3,6 @@
  * Licensed under the MIT License
  */
 
-import model.map.Maze
 import model.*
 import model.util.GameSettings
 import view.*
