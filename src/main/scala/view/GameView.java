@@ -22,6 +22,8 @@ public class GameView extends JFrame implements View  {
     private Player player;
     private List<Guardian> guardians;
     private Map<Pair<Integer, Integer>, Guardian> guardiansPosition;
+    private JLabel scoreLabel;
+    private JLabel livesLabel;
 
     public GameView(Game game) {
         this.game = game;
@@ -33,6 +35,21 @@ public class GameView extends JFrame implements View  {
         int size = maze.size();
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(50 * size, 50 * size);
+
+        // Panel for live and score
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topPanel.setBackground(Color.LIGHT_GRAY);
+        
+        scoreLabel = new JLabel("Score: " + player.score());
+        livesLabel = new JLabel(" | Lives: " + player.lives());
+
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        livesLabel.setFont(new Font("Arial", Font.BOLD, 16));
+
+        topPanel.add(scoreLabel);
+        topPanel.add(livesLabel);
+        
+        this.add(topPanel, BorderLayout.NORTH);
 
         JPanel panel = new JPanel(new GridLayout(size, size));
         this.getContentPane().add(panel);
@@ -67,6 +84,8 @@ public class GameView extends JFrame implements View  {
     }
 
     public void updateView() {
+        scoreLabel.setText("Score: " + player.score());
+        livesLabel.setText(" | Lives: " + player.lives());
         int size = maze.size();
         
         guardiansPosition.clear();
