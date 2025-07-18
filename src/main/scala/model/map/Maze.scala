@@ -132,10 +132,9 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
  */
 object Maze:
 
-  def generate(level: Int): Maze = {
-    val size = level*20
+  def generate(size: Int): Maze = {
     val rand = new scala.util.Random()
-    var grid = Vector.fill(size*40, size*40)(WallCell(): Cell)
+    var grid = Vector.fill(size, size)(WallCell(): Cell)
 
     def isInBounds(x: Int, y: Int): Boolean =
       x >= 0 && y >= 0 && x < size && y < size
