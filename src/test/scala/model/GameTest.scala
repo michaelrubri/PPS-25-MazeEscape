@@ -6,9 +6,11 @@
 package model
 
 import model.map.{DoorCell, WallCell}
+import model.puzzle.PuzzleRepository
 import model.util.GameSettings
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
+import scala.util.Random
 
 class GameTest:
 
@@ -20,13 +22,13 @@ class GameTest:
   
   @Test
   def testValidMovement(): Unit =
-    val (newX, newY) =
+    val newPosition =
       adjacentPosition(game.player.position).
       find((x, y) => game.maze.isWalkable(x, y)).
       get
-    val result = game.movePlayerTo(newX, newY)
+    val result = game.movePlayerTo(newPosition)
     assertTrue(result.isRight)
-    assertEquals((newX, newY), game.player.position)
+    assertEquals(newPosition, game.player.position, "Player should be able to move towards an adjacent valid cell")
 
   @Test
   def testValidMovementOpenDoor(): Unit =
@@ -40,7 +42,7 @@ class GameTest:
     doorCell.unlock()
     val result = game.movePlayerTo(doorCellCoords)
     assertTrue(result.isRight)
-    assertEquals(doorCellCoords, game.player.position)
+    assertEquals(doorCellCoords, game.player.position, "Player should be able to move towards an open door")
 
   @Test
   def testInvalidMovementClosedDoor(): Unit =
@@ -53,28 +55,28 @@ class GameTest:
     val result = game.movePlayerTo(doorCellCoords)
     assertTrue(result.isLeft)
     assertEquals("Invalid move", result.left.get)
-    assertEquals(floorCellAdjacentDoorCell, game.player.position)
+    assertEquals(floorCellAdjacentDoorCell, game.player.position, "Player should not be able to move towards a closed door")
 
   @Test
   def testInvalidMovementDistanceTooFar(): Unit =
-    val (tooFarX, tooFarY) =
+    val newPositionTooFar =
       adjacentPosition(game.player.position).
       map((x, y) => (x + 1, y + 1)).
       find((x, y) => game.maze.isWalkable(x, y)).
       get
-    val result = game.movePlayerTo(tooFarX, tooFarY)
+    val result = game.movePlayerTo(newPositionTooFar)
     assertTrue(result.isLeft)
-    assertEquals("Invalid move", result.left.get)
+    assertEquals("Invalid move", result.left.get, "Player should not be able to move to a non-adjacent cell")
 
   @Test
   def testInvalidMovementNonFloorCell(): Unit =
-    val (wallCellX, wallCellY) =
+    val wallCellCoords =
       adjacentPosition(game.player.position).
       find((x, y) => game.maze.getCell(x, y).isInstanceOf[WallCell]).
       get
-    val result = game.movePlayerTo(wallCellX, wallCellY)
+    val result = game.movePlayerTo(wallCellCoords)
     assertTrue(result.isLeft)
-    assertEquals("Invalid move", result.left.get)
+    assertEquals("Invalid move", result.left.get, "Player should not be able to move towards a non-floor cell")
 
   @Test
   def testInvalidMovementGameFinished(): Unit =
@@ -85,7 +87,7 @@ class GameTest:
       get
     val result = game.movePlayerTo(newX, newY)
     assertTrue(result.isLeft)
-    assertEquals("Game finished!", result.left.get)
+    assertEquals("Game finished!", result.left.get, "Player should not be able to move if the game is finished")
 
   @Test
   def testOpenDoorWrongAnswer(): Unit =
@@ -94,7 +96,7 @@ class GameTest:
     assertTrue(result.isLeft)
     assertEquals("Puzzle failed", result.left.get)
     val doorCell = game.maze.getCell(doorCellCoords._1, doorCellCoords._2).asInstanceOf[DoorCell]
-    assertFalse(doorCell.isOpen)
+    assertFalse(doorCell.isOpen, "Door should be closed if the answer is wrong")
 
   @Test
   def testOpenDoorCorrectAnswer(): Unit =
@@ -103,7 +105,7 @@ class GameTest:
     val puzzleSolution = doorCell.puzzle.solutions.head
     val result = game.openDoor(doorCellCoords, puzzleSolution)
     assertTrue(result.isRight)
-    assertTrue(doorCell.isOpen)
+    assertTrue(doorCell.isOpen, "Door should be open if the answer is correct")
 
   @Test
   def testOpenNonDoorCell(): Unit =
@@ -113,14 +115,46 @@ class GameTest:
     assertTrue(result.isLeft)
     assertEquals("This is not a door", result.left.get)
 
+  @RepeatedTest(10)
+  def testFightLogicNonDeterministic(): Unit =
+    val initialLives = game.player.lives
+    val initialScore = game.player.score
+    val answer = Seq(
+      PuzzleRepository.randomPuzzle().solutions.head,
+      "wrong answer"
+    )(Random.nextInt(2))
+    val result = game.fightLogic(answer)
+    result match
+      case Right(()) =>
+        assertEquals(initialScore + 50, game.player.score, "In case of success score should be increased")
+        assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
+      case Left(error) =>
+        assertEquals("Wrong answer, you lost a life", error)
+        assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
+        assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
+      case _ => fail("Unexpected path reached for method fightLogic()")
+
+  @RepeatedTest(10)
+  def testFightLuckNonDeterministic(): Unit =
+    val initialLives = game.player.lives
+    val initialScore = game.player.score
+    val result = game.fightLuck()
+    result match
+      case Right(()) =>
+        assertEquals(initialScore + 20, game.player.score, "In case of success score should be increased")
+        assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
+      case Left(error) =>
+        assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
+        assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
+      case _ => fail("Unexpected path reached for method fightLuck()")
+
   private val delta = List((1, 0), (-1, 0), (0, 1), (0, -1))
+  private val size = settings.mazeSize
 
   private def adjacentPosition(position: (Int, Int)): List[(Int, Int)] =
     delta.
       map((x, y) => (position._1 + x, position._2 + y)).
       filter((x, y) => x >= 0 && x < size && y >= 0 && y < size)
-
-  private val size = settings.mazeSize
 
   private val border = (0 until size).flatMap(x => Seq((x, 0), (x, size - 1))).
     concat((1 until size - 1).flatMap(y => Seq((0, y), (size - 1, y))))

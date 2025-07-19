@@ -93,10 +93,9 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    */
   def isWalkable(position: (Int, Int)): Boolean =
     getCell(position._1, position._2) match
-      case _: FloorCell   => true
-      case door: DoorCell => true
-      case _: WallCell => false
-      case _              => false
+      case _: FloorCell                   => true
+      case door: DoorCell if door.isOpen  => true
+      case _                              => false
 
   /**
    * Checks if the user has opened the door successfully and moved to that cell.
