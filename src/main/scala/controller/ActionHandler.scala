@@ -5,6 +5,8 @@
 
 package controller
 
+import model.Guardian
+
 /**
  * Represents all the actions a user can perform.
  */
@@ -40,13 +42,13 @@ object UserAction:
    * Represents the challenge with a guardian
    * based on solving a logical problem.
    */
-  case class FightLogic(answer: String) extends UserAction
+  case class FightLogic(guardian: Guardian, answer: String) extends UserAction
 
   /**
    * Represents the challenge with a guardian
    * based on the roll of a die.
    */
-  case object FightLuck extends UserAction
+  case class FightLuck(guardian: Guardian) extends UserAction
 
   /**
    * Used to restart a game.

@@ -5,6 +5,7 @@
 
 package controller
 
+import controller.UserAction.FightLuck
 import model.Game
 import model.map.{DoorCell, FloorCell}
 import view.GameView
@@ -20,7 +21,7 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
       case clickEvent: CellClickEvent =>
         val position = (clickEvent.getX, clickEvent.getY)
         onAction(UserAction.ClickCell(position))
-      case _ =>
+      case _ => ()
     }
 
   override def onAction(action: UserAction): Unit = action match
@@ -31,6 +32,23 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
         case Right(_) =>
           game.updateGameState()
           view.updateView()
+          if game.finished() && game.victory() then view.showMessage("You escaped! Congratulations!")
+          else
+            game.guardianAtPlayer().headOption.foreach(guardian =>
+              view.showFightChoice { choice =>
+                if choice == "logic" then
+                  val puzzle = game.startLogicChallenge()
+                  view.showPuzzle(
+                    puzzle.question,
+                    userAnswer => {
+                      onAction(UserAction.FightLogic(guardian, userAnswer))
+                      scala.runtime.BoxedUnit.UNIT
+                    }
+                  )
+                else onAction(FightLuck(guardian))
+                scala.runtime.BoxedUnit.UNIT
+              }
+            )
         case Left(error) =>
           view.showMessage(error)
 
@@ -42,8 +60,8 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
         case Left(error) =>
           view.showMessage(error)
 
-    case UserAction.FightLogic(answer) =>
-      game.fightLogic(answer) match
+    case UserAction.FightLogic(guardian, answer) =>
+      game.fightLogic(guardian, answer) match
         case Right(_) =>
           view.showMessage("Guardian defeated!")
           view.updateView()
@@ -51,10 +69,10 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
           view.showMessage(error)
           view.updateView()
 
-    case UserAction.FightLuck =>
-      game.fightLuck() match
+    case UserAction.FightLuck(guardian) =>
+      game.fightLuck(guardian) match
         case Right(_) =>
-          view.showMessage("You are lucky, you have won!")
+          view.showMessage("You were lucky, you won!")
           view.updateView()
         case Left(error) =>
           view.showMessage(error)
@@ -64,7 +82,7 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
       game.startGame()
       view.updateView()
 
-    case UserAction.InvalidAction(_) => view.showMessage("Invalid action")
+    case UserAction.InvalidAction(error) => view.showMessage(s"Invalid action: $error")
 
   private def handleClick(position: (Int, Int)): Unit =
     game.maze.getCell(position._1, position._2) match
@@ -74,29 +92,12 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
       case door: DoorCell if !door.isOpen =>
         view.showPuzzle(
           door.puzzle.question,
-          answer => {
-            onAction(UserAction.AttemptOpenDoor(position, answer))
+          userAnswer => {
+            onAction(UserAction.AttemptOpenDoor(position, userAnswer))
             scala.runtime.BoxedUnit.UNIT
           }
         )
 
       case _: DoorCell => view.showMessage("Door is already open")
-
-      case _ if game.guardianAtPlayer().nonEmpty =>
-        view.showFightChoice { choice =>
-          if choice == "logic" then
-            val puzzle = game.startLogicChallenge()
-            view.showPuzzle(
-              puzzle.question,
-              (userAns: String) => {
-                onAction(UserAction.FightLogic(userAns))
-                scala.runtime.BoxedUnit.UNIT
-              }
-            )
-          else
-            onAction(UserAction.FightLuck)
-
-          scala.runtime.BoxedUnit.UNIT
-        }
 
       case _ => view.showMessage("Cell unreachable.")
