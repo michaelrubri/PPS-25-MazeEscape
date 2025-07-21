@@ -26,7 +26,7 @@ object PuzzleRepository:
       "A short story has at most 100 pages.\n" +
       "A story book has at most 500 pages.\n" +
       "What can you say about a book that has 400 pages?",
-      List("novel, story book")),
+      List("novel", "story book")),
     RiddlePuzzle(
       1,
       "What has roots as nobody sees,\n" +
