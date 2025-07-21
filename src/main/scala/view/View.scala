@@ -11,7 +11,7 @@ package view
 trait View:
 
   /**
-   * Renders the current state of the game.
+   * Updates the view based on the current state of the game.
    */
   def updateView(): Unit
 
