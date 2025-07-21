@@ -14,11 +14,15 @@ import scala.util.Random
 class Game(val settings: GameSettings):
   given maze: Maze = Maze.generate(settings.mazeSize)
   val player: Player = Player(maze.randomFloorCell(), settings.numLives, 0)
-  val guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{ case (x, y) => Guardian(x, y)}
+  var guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{case (x, y) => Guardian(x, y)}
   private var currentTurn: Int = uninitialized
   private var isFinished: Boolean = uninitialized
   private var isVictory: Boolean = uninitialized
   private var currentPuzzle: Option[Puzzle] = uninitialized
+
+  def finished(): Boolean = isFinished
+
+  def victory(): Boolean = isVictory
 
   def startGame(): Unit =
     currentTurn = 0
@@ -39,8 +43,8 @@ class Game(val settings: GameSettings):
       currentTurn += 1
       isFinished =
         player.lives <= 0 ||
-          currentTurn >= settings.maxDuration ||
-          maze.isExit(player.position)
+        currentTurn >= settings.maxDuration ||
+        maze.isExit(player.position)
       isVictory = maze.isExit(player.position)
     }
       
@@ -48,54 +52,67 @@ class Game(val settings: GameSettings):
     isFinished = true
     isVictory
 
-  def movePlayerTo(position: (Int, Int)): Either[String, Unit] =
-    val from = player.position
-    val validMove = isAdjacent(from, position) && maze.isWalkable(position)
+  def movePlayerTo(toPosition: (Int, Int)): Either[String, Unit] =
     if isFinished then Left("Game finished!")
-    else if validMove then
-      directionBetween(from, position).foreach(player.move)
-      Right(())
-    else Left("Invalid move")
+    else
+      val fromPosition = player.position
+      val validMove =
+        isAdjacent(fromPosition, toPosition)
+        && !isCellOccupied(toPosition)
+        && maze.isWalkable(toPosition)
+      if validMove then
+        directionBetween(fromPosition, toPosition).foreach(player.move)
+        Right(())
+      else Left("Invalid move")
+
+  private def isCellOccupied(position: (Int, Int)): Boolean = guardians.exists(_.position == position)
 
   def openDoor(at: (Int, Int), userAnswer: String): Either[String, Unit] =
-    maze.getCell(at._1, at._2) match
-      case door: DoorCell if !door.isOpen =>
-        val solution = door.puzzle.checkAnswer(userAnswer)
-        if solution then
-          door.unlock()
-          Right(())
-        else
-          door.blockFor(settings.lockDoorInTurns)
-          Left("Puzzle failed")
-      case _: DoorCell => Left("Door is already opened")
-      case _ => Left("This is not a door")
+    if !isAdjacent(player.position, at) then Left("Player should be adjacent to the door")
+    else
+      maze.getCell(at._1, at._2) match
+        case door: DoorCell if !door.isOpen =>
+          if door.puzzle.checkAnswer(userAnswer) then
+            door.unlock()
+            Right(())
+          else
+            door.blockFor(settings.lockDoorInTurns)
+            Left("Puzzle failed")
+        case door: DoorCell if door.isBlocked => Left(s"Door is blocked for ${door._3} turns")
+        case _: DoorCell => Left("Door is already opened")
+        case _ => Left("This is not a door")
 
   def startLogicChallenge(): Puzzle =
     val puzzle = PuzzleRepository.randomPuzzle()
     currentPuzzle = Some(puzzle)
     puzzle
 
-  def fightLogic(answer: String): Either[String, Unit] =
-    val puzzle = startLogicChallenge()
+  def fightLogic(guardian: Guardian, answer: String): Either[String, Unit] =
     currentPuzzle match
-      case Some(puzzle) if puzzle.checkAnswer(answer) =>
-        currentPuzzle = None
-        player.addScore(50)
-        Right(())
       case Some(puzzle) =>
         currentPuzzle = None
-        player.loseLife()
-        Left("Wrong answer, you lost a life")
+        val result =
+          if puzzle.checkAnswer(answer) then
+            player.addScore(50)
+            Right(())
+          else
+            player.loseLife()
+            Left("Wrong answer, you lost a life")
+        guardians = guardians.filterNot(_ == guardian)
+        result
       case None => Left("No active puzzle")
 
-  def fightLuck(): Either[String, Unit] =
+  def fightLuck(guardian: Guardian): Either[String, Unit] =
     val win = Random.nextBoolean()
-    if win then
-      player.addScore(20)
-      Right(())
-    else
-      player.loseLife()
-      Left("You were unlucky, you lost the fight")
+    val result =
+      if win then
+        player.addScore(20)
+        Right(())
+      else
+        player.loseLife()
+        Left("You were unlucky, you lost the fight")
+    guardians = guardians.filterNot(_ == guardian)
+    result
 
   def guardianAtPlayer(): List[Guardian] =
     guardians.filter(guardian => isAdjacent(guardian.position, player.position))
