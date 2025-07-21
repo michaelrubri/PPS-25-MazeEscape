@@ -11,7 +11,7 @@ import scala.util.Random
 /**
  * The generic cell used to generate the maze.
  */
-abstract class Cell:
+sealed trait Cell:
   def toString: String
 
 /**
@@ -107,23 +107,20 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
     getCell(position._1, position._2) match
       case door: DoorCell => door.isOpen
       case _              => false
-
-
+  
   /**
+   * Selects a random floor cell of the maze.
    *
-   * @return a FloorCell which is far away from the exit
+   * @return the coordinates of the floor cell.
    */
-  def randomFloorCell(): (Int, Int) = {
-    val rand = new scala.util.Random()
-    val floorCells = for {
+  def randomFloorCell(): (Int, Int) =
+    val rand = new Random()
+    val floorCells = for
       y <- 0 until size/2
       x <- 0 until size/2
       if grid(x)(y).isInstanceOf[FloorCell]
-    } yield (x, y)
-
+    yield (x, y)
     floorCells(rand.nextInt(floorCells.length))
-  }
-
       
 /**
  * The companion object of class Maze. It has the responsibility to create the maze
