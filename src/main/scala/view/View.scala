@@ -5,8 +5,6 @@
 
 package view
 
-import model.Game
-
 /**
  * Defines all the actions performed on the GUI.
  */
@@ -14,8 +12,6 @@ trait View:
 
   /**
    * Renders the current state of the game.
-   *
-   * @param game entity that controls the state of the system.
    */
   def updateView(): Unit
 
