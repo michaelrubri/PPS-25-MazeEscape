@@ -36,3 +36,11 @@ trait View:
    * @param choice the user's choice of combat type.
    */
   def showFightChoice(choice: String => Unit): Unit
+
+  /**
+   * Shows to the user the end-game menu allowing him to start a new game or exit.
+   *
+   * @param victory flag that defines whether the player has won.
+   * @param choice the user's choice.
+   */
+  def showEndGameMenu(victory: Boolean)(choice: String => Unit): Unit

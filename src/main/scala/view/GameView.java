@@ -126,6 +126,16 @@ public class GameView extends JFrame implements View  {
     public void showMessage(String msg) {
         SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, msg));
     }
+
+    @Override
+    public void showPuzzle(String question, Function1<String, BoxedUnit> answer) {
+        SwingUtilities.invokeLater(() -> {
+            String userAns = JOptionPane.showInputDialog(
+                    this, question, "Puzzle", JOptionPane.QUESTION_MESSAGE
+            );
+            answer.apply(userAns);
+        });
+    }
     
     @Override
     public void showFightChoice(Function1<String, BoxedUnit> choice) {
@@ -148,12 +158,23 @@ public class GameView extends JFrame implements View  {
     }
 
     @Override
-    public void showPuzzle(String question, Function1<String, BoxedUnit> answer) {
+    public void showEndGameMenu(boolean victory, Function1<String, BoxedUnit> choice) {
         SwingUtilities.invokeLater(() -> {
-            String userAns = JOptionPane.showInputDialog(
-                    this, question, "Puzzle", JOptionPane.QUESTION_MESSAGE
+            String title = victory ? "You Win!" : "Game Over!";
+            String[] options = { "Restart", "Exit" };
+            int selection = JOptionPane.showOptionDialog(
+                    this,
+                    victory ? "Congratulations, you escaped" : "You failed to escape",
+                    title,
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null,
+                    options,
+                    options[0]
             );
-            answer.apply(userAns);
+            if (selection >= 0 && selection < options.length) {
+                choice.apply(options[selection].toLowerCase());
+            }
         });
     }
     
