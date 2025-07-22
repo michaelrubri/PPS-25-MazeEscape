@@ -13,6 +13,7 @@ import view.utils.*
 
 class Controller(view: GameView, game: Game) extends UserActionHandler:
 
+  game.startGame()
   view.updateView()
   initEventBus()
   
@@ -32,7 +33,14 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
         case Right(_) =>
           game.updateGameState()
           view.updateView()
-          if game.finished() && game.victory() then view.showMessage("You escaped! Congratulations!")
+          if game.finished() then
+            view.showEndGameMenu(
+              game.victory(),
+              choice =>
+                if choice == "restart" then onAction(UserAction.Restart) 
+                else System.exit(0)
+                scala.runtime.BoxedUnit.UNIT
+            )
           else
             game.guardianAtPlayer().headOption.foreach(guardian =>
               view.showFightChoice { choice =>
@@ -54,16 +62,17 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
 
     case UserAction.AttemptOpenDoor(position, answer) =>
       game.openDoor(position, answer) match
-        case Right(_) =>
+        case Right(message) =>
           game.updateGameState()
+          view.showMessage(message)
           view.updateView()
         case Left(error) =>
           view.showMessage(error)
 
     case UserAction.FightLogic(guardian, answer) =>
       game.fightLogic(guardian, answer) match
-        case Right(_) =>
-          view.showMessage("Guardian defeated!")
+        case Right(message) =>
+          view.showMessage(message)
           view.updateView()
         case Left(error) =>
           view.showMessage(error)
@@ -71,8 +80,8 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
 
     case UserAction.FightLuck(guardian) =>
       game.fightLuck(guardian) match
-        case Right(_) =>
-          view.showMessage("You were lucky, you won!")
+        case Right(message) =>
+          view.showMessage(message)
           view.updateView()
         case Left(error) =>
           view.showMessage(error)
@@ -82,12 +91,17 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
       game.startGame()
       view.updateView()
 
-    case UserAction.InvalidAction(error) => view.showMessage(s"Invalid action: $error")
+    case UserAction.InvalidAction(error) => view.showMessage(s"(Controller) Invalid action: $error")
 
   private def handleClick(position: (Int, Int)): Unit =
     game.maze.getCell(position._1, position._2) match
 
       case _: FloorCell => onAction(UserAction.AttemptMove(position))
+
+      case door: DoorCell if door.isOpen => onAction(UserAction.AttemptMove(position))
+
+      case door: DoorCell if !door.isOpen && door.isBlocked =>
+        view.showMessage(s"(Controller) Door is blocked for ${door.turnsLeft} turns")
 
       case door: DoorCell if !door.isOpen =>
         view.showPuzzle(
@@ -98,6 +112,4 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
           }
         )
 
-      case _: DoorCell => view.showMessage("Door is already open")
-
-      case _ => view.showMessage("Cell unreachable.")
+      case _ => view.showMessage("(Controller) Cell unreachable.")
