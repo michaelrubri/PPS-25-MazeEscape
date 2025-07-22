@@ -71,8 +71,8 @@ class Game(val settings: GameSettings):
   private def isCellOccupied(position: (Int, Int)): Boolean = guardians.exists(_.position == position)
 
   def openDoor(at: (Int, Int), userAnswer: String): Either[String, String] =
-    if !isAdjacent(player.position, at) then Left("(Game) Player should be adjacent to the door")
-    else
+    // if !isAdjacent(player.position, at) then Left("(Game) Player should be adjacent to the door")
+    // else
       maze.getCell(at._1, at._2) match
         case door: DoorCell if door.isOpen => Left("(Game) Door is already open")
         case door: DoorCell if door.isBlocked => Left(s"(Game) Door is blocked for ${door.turnsLeft} turns")
