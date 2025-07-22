@@ -22,7 +22,7 @@ del sistema che sia coerente e corretto.
 - Collaborazione diretta per la revisione del codice e delle decisioni progettuali.
 - Comunicazione continua e confronto immediato.
 
-Deadline sprint: 20/07/2025
+Deadline sprint: 21/07/2025
 
 ---
 
@@ -37,3 +37,12 @@ Deadline sprint: 20/07/2025
 - Aggiornamento dell'algoritmo per lo sviluppo della mappa.
 - Estensione del comportamento dei Guardian.
 - Revisione del sistema a seguito di modifiche.
+
+---
+
+## Revisione dello sprint - 21/07/2025
+
+Il team ha raggiunto tutti gli obiettivi precedentemente definiti. In particolare durante questo incontro sono state
+valutate le capacità del sistema e la validità delle caratteristiche proposte, tenendo conto degli obiettivi del
+progetto, quindi dei requisiti definiti con il committente. Il sistema risulta attualmente funzionante e giocabile
+ponendo il livello di difficoltà a "easy" e rispetta i termini definiti.

@@ -23,6 +23,7 @@ Campus di Cesena - Italia
 - [Primo Incontro](sprint/0-PrimoIncontro.md)
 - [Primo Sprint](sprint/1-PrimoSprint.md)
 - [Secondo Sprint](sprint/2-SecondoSprint.md)
+- [Terzo Sprint](sprint/3-TerzoSprint.md)
 
 ---
 

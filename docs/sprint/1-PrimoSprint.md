@@ -80,4 +80,4 @@ I seguenti obiettivi sono stati conseguiti come preventivato:
 L'ultimo obiettivo relativo allo sviluppo della GUI non è stato conseguito totalmente. Il progetto allo stato attuale
 presenta un'interfaccia grafica sviluppata in Java ma il progetto non risulta essere compilabile a causa di alcune
 incompatibilità tra la GUI e la generazione della mappa. Il team ha dunque valutato di posticipare tale obiettivo nello
-sprint successivo e migrare l'interfaccia da JavaFx a ScalaFx.
+sprint successivo.
