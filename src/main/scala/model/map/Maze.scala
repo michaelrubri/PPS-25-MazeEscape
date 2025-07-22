@@ -6,6 +6,8 @@
 package model.map
 
 import model.puzzle.{Puzzle, PuzzleRepository}
+
+import scala.reflect.ClassTag
 import scala.util.Random
 
 /**
@@ -29,12 +31,10 @@ case class FloorCell() extends Cell:
 /**
  * Represents a door cell.
  */
-case class DoorCell(
-                   puzzle: Puzzle,
-                   private var open: Boolean = false,
-                   private var blockedTurns: Int = 0,
-                   ) extends Cell:
-
+case class DoorCell(puzzle: Puzzle) extends Cell:
+  private var open: Boolean = false
+  private var blockedTurns: Int = 0
+  
   /**
    * Checks if the door is open.
    *
@@ -55,6 +55,13 @@ case class DoorCell(
   def blockFor(turns: Int): Unit = blockedTurns = turns
 
   /**
+   * Provides the remaining turns in which the door is locked.
+   * 
+   * @return number of turns to wait.
+   */
+  def turnsLeft: Int = blockedTurns
+
+  /**
    * Checks if the door is blocked.
    *
    * @return true if the door is blocked, false otherwise.
@@ -64,7 +71,7 @@ case class DoorCell(
   /**
    * Decreases the number of turns the door is locked.
    */
-  def decrementBlock(): Unit = if blockedTurns > 0 then blockedTurns -= 1
+  def decrementTurns(): Unit = if blockedTurns > 0 then blockedTurns -= 1
 
   override def toString: String = "->"
 
@@ -84,6 +91,29 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @return the cell based on the specified coordinates.
    */
   def getCell(x: Int, y: Int): Cell = grid(x)(y)
+
+  /**
+   * Provides the cells of the same type.
+   *
+   * @return a list of cells of type A, subtype of Cell.
+   */
+  private def cellsOfType[A <: Cell : ClassTag]: List[A] = grid.flatten.collect { case a: A => a }.toList
+
+  /**
+   * Provides all the door cells of the maze.
+   *
+   * @return a list of door cells.
+   */
+  def doorCells: List[DoorCell] = cellsOfType[DoorCell]
+  
+  // alternative to cellsOfType and doorCells
+
+  /**
+   * Provides all the cells of the maze.
+   *
+   * @return a list of generic cells.
+   */
+  def cells: List[Cell] = grid.flatten.toList
 
   /**
    * Determines whether the cell can be walked on.
@@ -169,8 +199,7 @@ object Maze:
       }
     }
 
-    grid = grid.updated(size - 2, grid(size - 2).updated(size - 1,
-      DoorCell(PuzzleRepository.randomPuzzle())))
+    grid = grid.updated(size - 2, grid(size - 2).updated(size - 1, DoorCell(PuzzleRepository.randomPuzzle())))
 
     new Maze(size, grid)
   }
