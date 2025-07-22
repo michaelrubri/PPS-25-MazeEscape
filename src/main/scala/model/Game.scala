@@ -15,6 +15,7 @@ class Game(val settings: GameSettings):
   given maze: Maze = Maze.generate(settings.mazeSize)
   val player: Player = Player(maze.randomFloorCell(), settings.numLives, 0)
   var guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{case (x, y) => Guardian(x, y)}
+  private var doors: List[DoorCell] = uninitialized
   private var currentTurn: Int = uninitialized
   private var isFinished: Boolean = uninitialized
   private var isVictory: Boolean = uninitialized
@@ -25,6 +26,7 @@ class Game(val settings: GameSettings):
   def victory(): Boolean = isVictory
 
   def startGame(): Unit =
+    doors = maze.doorCells
     currentTurn = 0
     isFinished = false
     isVictory = false
@@ -41,6 +43,7 @@ class Game(val settings: GameSettings):
         occupied + guardian.position
       }
       currentTurn += 1
+      doors.foreach(_.decrementTurns())
       isFinished =
         player.lives <= 0 ||
         currentTurn >= settings.maxDuration ||
@@ -53,7 +56,7 @@ class Game(val settings: GameSettings):
     isVictory
 
   def movePlayerTo(toPosition: (Int, Int)): Either[String, Unit] =
-    if isFinished then Left("Game finished!")
+    if isFinished then Left("(Game) Game finished!")
     else
       val fromPosition = player.position
       val validMove =
@@ -63,54 +66,54 @@ class Game(val settings: GameSettings):
       if validMove then
         directionBetween(fromPosition, toPosition).foreach(player.move)
         Right(())
-      else Left("Invalid move")
+      else Left("(Game) Invalid move")
 
   private def isCellOccupied(position: (Int, Int)): Boolean = guardians.exists(_.position == position)
 
-  def openDoor(at: (Int, Int), userAnswer: String): Either[String, Unit] =
-    if !isAdjacent(player.position, at) then Left("Player should be adjacent to the door")
+  def openDoor(at: (Int, Int), userAnswer: String): Either[String, String] =
+    if !isAdjacent(player.position, at) then Left("(Game) Player should be adjacent to the door")
     else
       maze.getCell(at._1, at._2) match
-        case door: DoorCell if !door.isOpen =>
+        case door: DoorCell if door.isOpen => Left("(Game) Door is already open")
+        case door: DoorCell if door.isBlocked => Left(s"(Game) Door is blocked for ${door.turnsLeft} turns")
+        case door: DoorCell =>
           if door.puzzle.checkAnswer(userAnswer) then
             door.unlock()
-            Right(())
+            Right("(Game) Door opened")
           else
             door.blockFor(settings.lockDoorInTurns)
-            Left("Puzzle failed")
-        case door: DoorCell if door.isBlocked => Left(s"Door is blocked for ${door._3} turns")
-        case _: DoorCell => Left("Door is already opened")
-        case _ => Left("This is not a door")
+            Left("(Game) Puzzle failed")
+        case _ => Left("(Game) This is not a door")
 
   def startLogicChallenge(): Puzzle =
     val puzzle = PuzzleRepository.randomPuzzle()
     currentPuzzle = Some(puzzle)
     puzzle
 
-  def fightLogic(guardian: Guardian, answer: String): Either[String, Unit] =
+  def fightLogic(guardian: Guardian, answer: String): Either[String, String] =
     currentPuzzle match
       case Some(puzzle) =>
         currentPuzzle = None
         val result =
           if puzzle.checkAnswer(answer) then
             player.addScore(50)
-            Right(())
+            Right("(Game) Guardian defeated!")
           else
             player.loseLife()
-            Left("Wrong answer, you lost a life")
+            Left("(Game) Wrong answer, you lost a life")
         guardians = guardians.filterNot(_ == guardian)
         result
-      case None => Left("No active puzzle")
+      case None => Left("(Game) No active puzzle")
 
-  def fightLuck(guardian: Guardian): Either[String, Unit] =
+  def fightLuck(guardian: Guardian): Either[String, String] =
     val win = Random.nextBoolean()
     val result =
       if win then
         player.addScore(20)
-        Right(())
+        Right("(Game) Guardian defeated!")
       else
         player.loseLife()
-        Left("You were unlucky, you lost the fight")
+        Left("(Game) You were unlucky, you lost the fight")
     guardians = guardians.filterNot(_ == guardian)
     result
 
