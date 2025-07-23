@@ -3,7 +3,7 @@
  * Licensed under the MIT License
  */
 
-package model
+package model.entities
 
 import model.utils.Position
 
@@ -17,16 +17,21 @@ enum Direction(val dx: Int, val dy: Int):
   case Left extends Direction(-1, 0)
 
 /**
+ * ADT to represent errors associated with PLayer entity.
+ */
+sealed trait PlayerError
+
+object PlayerError:
+  case object NoLivesLeft extends PlayerError
+  case class NegativeScore(invalidScore: Int) extends PlayerError
+  case class Unexpected(errorMessage: String) extends PlayerError
+
+type Result[A] = Either[PlayerError, A] 
+
+/**
  * Represents the entity controlled by the user.
  */
 trait Player extends Entity:
-
-  /**
-   * Provides the current position of the player.
-   * 
-   * @return the player position.
-   */
-  def position: Position
 
   /**
    * Provides user's remaining number of lives.
@@ -55,7 +60,7 @@ trait Player extends Entity:
    * 
    * @return updated instance of the player.
    */
-  def loseLife(): Player
+  def loseLife(): Result[Player]
   
   /**
    * Updates the score of the player.
@@ -63,17 +68,15 @@ trait Player extends Entity:
    * @param points the points to add to the score.
    * @return updated instance of the player.
    */
-  def addScore(points: Int): Player
+  def addScore(points: Int): Result[Player]
 
 object Player:
   def apply(initialPosition: Position, initialLives: Int, initialScore: Int): Player =
     PlayerImpl(initialPosition, initialLives, initialScore)
 
-type Result[A] = Either[PlayerError, A]
-
-private[model] case class PlayerImpl(position: Position,
-                                     lives: Int, 
-                                     score: Int) extends Player:
+private[entities] case class PlayerImpl(position: Position,
+                                        lives: Int,
+                                        score: Int) extends Player:
   override def move(direction: Direction): Player = copy(position = position.move(direction.dx, direction.dy))
   override def loseLife(): Result[Player] =
     if lives <= 0 then Left(PlayerError.NoLivesLeft)
@@ -82,10 +85,3 @@ private[model] case class PlayerImpl(position: Position,
     val newScore = score + points
     if newScore < 0 then Left(PlayerError.NegativeScore(points))
     else Right(copy(score = newScore))
-
-sealed trait PlayerError extends Product with Serializable
-
-object PlayerError:
-  case object NoLivesLeft extends PlayerError
-  case class NegativeScore(invalidScore: Int) extends PlayerError
-  case class Unexpected(errorMessage: String) extends PlayerError

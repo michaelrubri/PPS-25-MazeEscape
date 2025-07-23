@@ -3,9 +3,10 @@
  * Licensed under the MIT License
  */
 
-package model
+package model.entities
 
 import model.entities.{Direction, Player}
+import model.utils.Position
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 
@@ -16,35 +17,45 @@ class PlayerTest:
   var player: Player = uninitialized
   
   @BeforeEach
-  def init(): Unit = player = Player((0, 0), 3, 0)
+  def init(): Unit = player = Player(Position(0, 0), 1, 0)
 
   @Test
   def testInitialValues(): Unit =
-    assertEquals((0, 0), player.position)
-    assertEquals(3, player.lives)
+    assertEquals(Position(0, 0), player.position)
+    assertEquals(1, player.lives)
     assertEquals(0, player.score)
 
   @Test
   def testMove(): Unit =
-    player.move(Direction.Up)
-    assertEquals((0, 1), player.position, "Player should move to the top")
-    player.move(Direction.Right)
-    assertEquals((1, 1), player.position, "Player should move to the right")
-    player.move(Direction.Left)
-    assertEquals((0, 1), player.position, "Player should move to the left")
-    player.move(Direction.Down)
-    assertEquals((0, 0), player.position, "Player should move to the bottom")
+    val up = player.move(Direction.Up)
+    assertEquals(Position(0, 1), up.position, "Player should move to the top")
+    val down = player.move(Direction.Down)
+    assertEquals(Position(0, -1), down.position, "Player should move to the bottom")
+    val right = player.move(Direction.Right)
+    assertEquals(Position(1, 0), right.position, "Player should move to the right")
+    val left = player.move(Direction.Left)
+    assertEquals(Position(-1, 0), left.position, "Player should move to the left")
 
   @Test
-  def testLoseLife(): Unit =
-    player.loseLife()
-    assertEquals(2, player.lives, "Player should lose a life")
-    player.loseLife()
-    assertEquals(1, player.lives, "Player should lose a life")
+  def testValidLoseLife(): Unit =
+    val result = player.loseLife()
+    assertTrue(result.isRight)
+    val updatedPlayer = result.getOrElse(fail("Expected Right"))
+    assertEquals(0, updatedPlayer.lives, "Player should lose a life")
 
   @Test
-  def testAddScore(): Unit =
-    player.addScore(10)
-    assertEquals(10, player.score, "Score should be added")
-    player.addScore(5)
-    assertEquals(15, player.score, "Score should be added")
+  def testInvalidLoseLife(): Unit =
+    val updatedPlayer = player.loseLife().getOrElse(fail("Expected Right"))
+    assertEquals(0, updatedPlayer.lives)
+    val result = updatedPlayer.loseLife()
+    assertTrue(result.isLeft)
+    result match
+      case Left(PlayerError.NoLivesLeft) => ()
+      case other                         => fail(s"Unexpected error: $other")
+
+  @Test
+  def testValidAddScore(): Unit =
+    val result = player.addScore(50)
+    assertTrue(result.isRight)
+    val updatedPlayer = result.getOrElse(fail("Expected Right"))
+    assertEquals(50, updatedPlayer.score, "The player's score should be increased")
