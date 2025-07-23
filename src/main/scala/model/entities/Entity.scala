@@ -3,9 +3,18 @@
  * Licensed under the MIT License
  */
 
-package model
+package model.entities
+
+import model.utils.Position
 
 /**
  * Represents a generic entity
  */
-trait Entity
+trait Entity:
+
+  /**
+   * Provides the current position of the entity.
+   *
+   * @return the entity position.
+   */
+  def position: Position
