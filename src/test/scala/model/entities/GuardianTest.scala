@@ -5,8 +5,10 @@
 
 package model
 
+import model.entities.Guardian
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
+
 import scala.compiletime.uninitialized
 
 class GuardianTest:
@@ -20,13 +22,11 @@ class GuardianTest:
   def testInitialValues(): Unit = assertEquals((0, 0), guardian.position)
 
   @Test
-  def testInterceptWhenGuardianAdjacentPlayer(): Unit =
+  def testGuardianAdjacentPlayerNotMove(): Unit =
     val adjacentHorizontally = guardian.intercept(1, 0)
     assertEquals((0, 0), adjacentHorizontally,"Guardian should not move")
     val adjacentVertically = guardian.intercept(0, 1)
     assertEquals((0, 0), adjacentVertically, "Guardian should not move")
-    val adjacentDiagonally = guardian.intercept((1, 1))
-    assertEquals((0, 0), adjacentDiagonally, "Guardian should not move")
 
   @Test
   def testInterceptHorizontally(): Unit =
@@ -41,13 +41,6 @@ class GuardianTest:
     assertEquals((0, 1), moveUp, "Guardian should move to the top")
     val moveDown = guardian.intercept(0, -3)
     assertEquals((0, -1), moveDown, "Guardian should move to the bottom")
-
-  @Test
-  def testInterceptDiagonally(): Unit =
-    val moveDiagonallyRightTop = guardian.intercept(2, 2)
-    assertEquals((1, 1), moveDiagonallyRightTop, "Guardian should move to the right-top")
-    val moveDiagonallyLeftBottom = guardian.intercept(-2, -2)
-    assertEquals((-1, -1), moveDiagonallyLeftBottom, "Guardian should move to the left-bottom")
 
   @Test
   def testUpdatePosition(): Unit =

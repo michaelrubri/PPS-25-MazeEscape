@@ -3,7 +3,7 @@
  * Licensed under the MIT License
  */
 
-package model.util
+package model.utils
 
 /**
  * Defines the parameters of the game.

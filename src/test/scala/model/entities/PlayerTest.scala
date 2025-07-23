@@ -5,8 +5,10 @@
 
 package model
 
+import model.entities.{Direction, Player}
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
+
 import scala.compiletime.uninitialized
 
 class PlayerTest:
