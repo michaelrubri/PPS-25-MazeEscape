@@ -5,7 +5,7 @@
 
 package controller
 
-import model.Guardian
+import model.entities.Guardian
 
 /**
  * Represents all the actions a user can perform.
