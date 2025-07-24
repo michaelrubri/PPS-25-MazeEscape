@@ -9,8 +9,22 @@ package model.puzzle
  * Represents a generic puzzle.
  */
 sealed trait Puzzle:
+
+  /**
+   * Puzzle's identification number
+   */
   def id: Int
+
+  /**
+   * Riddle's question.
+   */
   def question: String
+
+  /**
+   * Valid solutions to the puzzle.
+   *
+   * @return a list of possible solutions.
+   */
   def solutions: List[String]
   
   /**

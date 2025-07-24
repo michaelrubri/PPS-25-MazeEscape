@@ -72,12 +72,12 @@ object PuzzleRepository:
     selectedPuzzle
 
   /**
-   * Resets all the puzzles to NOT USED
+   * Resets the available puzzles.
    */
   private def resetPuzzles(): Unit = availablePuzzles = allPuzzles
   
   /**
-   * Selects the puzzle by the identifier.
+   * Selects the puzzle from the identifier.
    *
    * @param id numeric identifier.
    * @return the puzzle associated with the identifier if exists, none otherwise.
