@@ -5,10 +5,10 @@
 
 package model.entities
 
-import model.utils.Position
+import model.utils.Position._
 
 /**
- * Represents a generic entity
+ * Represents a generic entity.
  */
 trait Entity:
 
