@@ -5,11 +5,9 @@
 
 package model.entities
 
-import model.entities.{Direction, Player}
 import model.utils.Position
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-
 import scala.compiletime.uninitialized
 
 class PlayerTest:

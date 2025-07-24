@@ -5,19 +5,19 @@
 
 package model.entities
 
-import model.utils.Position
+import model.utils.Position._
 
 /**
  * Represents the direction where the player wants to move.
  */
-enum Direction(val dx: Int, val dy: Int):
+enum Direction(val x: Int, val y: Int):
   case Up extends Direction(0, 1)
   case Down extends Direction(0, -1)
   case Right extends Direction(1, 0)
   case Left extends Direction(-1, 0)
 
 /**
- * ADT to represent errors associated with PLayer entity.
+ * Represents errors associated with player entity.
  */
 sealed trait PlayerError
 
@@ -70,14 +70,26 @@ trait Player extends Entity:
    */
   def addScore(points: Int): Result[Player]
 
+/**
+ * The companion object of player.
+ */
 object Player:
+
+  /**
+   * Generates a new instance of player.
+   *
+   * @param initialPosition player's starting position.
+   * @param initialLives player's initial lives.
+   * @param initialScore player's initial score.
+   * @return new instance of player.
+   */
   def apply(initialPosition: Position, initialLives: Int, initialScore: Int): Player =
     PlayerImpl(initialPosition, initialLives, initialScore)
 
 private[entities] case class PlayerImpl(position: Position,
                                         lives: Int,
                                         score: Int) extends Player:
-  override def move(direction: Direction): Player = copy(position = position.move(direction.dx, direction.dy))
+  override def move(direction: Direction): Player = copy(position = position.move(direction.x, direction.y))
   override def loseLife(): Result[Player] =
     if lives <= 0 then Left(PlayerError.NoLivesLeft)
     else Right(copy(lives = lives - 1))
