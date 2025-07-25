@@ -4,8 +4,8 @@
  */
 
 import model.*
-import model.util.GameSettings
-import view.{GameView, *}
+import model.utils.GameSettings
+import view.*
 import controller.*
 import java.util.function.Consumer
 
