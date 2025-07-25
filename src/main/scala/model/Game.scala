@@ -5,16 +5,18 @@
 
 package model
 
+import model.entities.{Direction, Guardian, Player}
 import model.map.{DoorCell, Maze}
 import model.puzzle.{Puzzle, PuzzleRepository}
-import model.util.GameSettings
+import model.utils.Position._
+import model.utils.{GameSettings, Position}
 import scala.compiletime.uninitialized
 import scala.util.Random
 
 class Game(val settings: GameSettings):
   given maze: Maze = Maze.generate(settings.mazeSize)
-  val player: Player = Player(maze.randomFloorCell(), settings.numLives, 0)
-  var guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{case (x, y) => Guardian(x, y)}
+  var player: Player = Player(maze.randomFloorCell(), settings.numLives, 0)
+  var guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{case Position(x, y) => Guardian(Position(x, y))}
   private var doors: List[DoorCell] = uninitialized
   private var currentTurn: Int = uninitialized
   private var isFinished: Boolean = uninitialized
@@ -37,11 +39,16 @@ class Game(val settings: GameSettings):
 
   def updateGameState(): Unit =
     unless(isFinished) {
-      val entitiesPositionAfterTurn = guardians.foldLeft(Set(player.position)) { (occupied, guardian) =>
-        val newPosition = guardian.intercept(player.position)
-        if maze.isWalkable(newPosition) && !occupied(newPosition) then guardian.updatePosition(newPosition)
-        occupied + guardian.position
+      val positionsOccupied = Set(player.position)
+      val (updatedGuardians, _) = guardians.foldLeft((List.empty[Guardian], positionsOccupied)) {
+        case ((acc, occ), guardian) => 
+          val newPosition = guardian.intercept(player.position)
+          if maze.isWalkable(newPosition) && !positionsOccupied(newPosition) then
+            val updatedGuardian = guardian.updatePosition(newPosition)
+            (acc :+ updatedGuardian, occ + newPosition)
+          else (acc :+ guardian, occ)
       }
+      guardians = updatedGuardians
       currentTurn += 1
       doors.foreach(_.decrementTurns())
       isFinished =
@@ -55,7 +62,7 @@ class Game(val settings: GameSettings):
     isFinished = true
     isVictory
 
-  def movePlayerTo(toPosition: (Int, Int)): Either[String, Unit] =
+  def movePlayerTo(toPosition: Position): Either[String, Unit] =
     if isFinished then Left("(Game) Game finished!")
     else
       val fromPosition = player.position
@@ -64,16 +71,16 @@ class Game(val settings: GameSettings):
         && !isCellOccupied(toPosition)
         && maze.isWalkable(toPosition)
       if validMove then
-        directionBetween(fromPosition, toPosition).foreach(player.move)
+        directionBetween(fromPosition, toPosition).foreach(direction => player = player.move(direction))
         Right(())
       else Left("(Game) Invalid move")
 
-  private def isCellOccupied(position: (Int, Int)): Boolean = guardians.exists(_.position == position)
+  private def isCellOccupied(position: Position): Boolean = guardians.exists(_.position == position)
 
-  def openDoor(at: (Int, Int), userAnswer: String): Either[String, String] =
-    // if !isAdjacent(player.position, at) then Left("(Game) Player should be adjacent to the door")
-    // else
-      maze.getCell(at._1, at._2) match
+  def openDoor(at: Position, userAnswer: String): Either[String, String] =
+    if !isAdjacent(player.position, at) then Left("(Game) Player should be adjacent to the door")
+    else
+      maze.getCell(at.x, at.y) match
         case door: DoorCell if door.isOpen => Left("(Game) Door is already open")
         case door: DoorCell if door.isBlocked => Left(s"(Game) Door is blocked for ${door.turnsLeft} turns")
         case door: DoorCell =>
@@ -96,11 +103,23 @@ class Game(val settings: GameSettings):
         currentPuzzle = None
         val result =
           if puzzle.checkAnswer(answer) then
-            player.addScore(50)
-            Right("(Game) Guardian defeated!")
+            player.
+              addScore(50).
+              fold (
+                error => Left(s"(Game) Score update failed: $error"),
+                newPlayer =>
+                  player = newPlayer
+                  Right("(Game) Guardian defeated!")
+              )
           else
-            player.loseLife()
-            Left("(Game) Wrong answer, you lost a life")
+            player.
+              loseLife().
+              fold(
+                error => Left(s"(Game) Lose life error: $error"),
+                newPlayer =>
+                  player = newPlayer
+                  Left("(Game) Wrong answer, you lost a life")
+              )
         guardians = guardians.filterNot(_ == guardian)
         result
       case None => Left("(Game) No active puzzle")
@@ -109,25 +128,37 @@ class Game(val settings: GameSettings):
     val win = Random.nextBoolean()
     val result =
       if win then
-        player.addScore(20)
-        Right("(Game) Guardian defeated!")
+        player.
+          addScore(20).
+          fold(
+            error => Left(s"(Game) Score update failed: $error"),
+            newPlayer =>
+              player = newPlayer
+              Right("(Game) Guardian defeated!")
+          )
       else
-        player.loseLife()
-        Left("(Game) You were unlucky, you lost the fight")
+        player.
+          loseLife().
+          fold(
+            error => Left(s"(Game) Lose life error: $error"),
+            newPlayer =>
+              player = newPlayer
+              Right("(Game) You were unlucky, you lost the fight")
+          )
     guardians = guardians.filterNot(_ == guardian)
     result
 
   def guardianAtPlayer(): List[Guardian] =
     guardians.filter(guardian => isAdjacent(guardian.position, player.position))
 
-  def isAdjacent(from: (Int, Int), to: (Int, Int)): Boolean =
-    val (dx, dy) = ((from._1 - to._1).abs, (from._2 - to._2).abs)
+  def isAdjacent(from: Position, to: Position): Boolean =
+    val (dx, dy) = ((from.x - to.x).abs, (from.y - to.y).abs)
     (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
 
-  private def directionBetween(from: (Int, Int), to: (Int, Int)): Option[Direction] =
-    (to._1 - from._1, to._2 - from._2) match
-      case (1, 0) => Some(Direction.Right)
-      case (-1, 0) => Some(Direction.Left)
-      case (0, 1) => Some(Direction.Up)
-      case (0, -1) => Some(Direction.Down)
+  private def directionBetween(from: Position, to: Position): Option[Direction] =
+    (to.x - from.x, to.y - from.y) match
+      case (1, 0)   => Some(Direction.Right)
+      case (-1, 0)  => Some(Direction.Left)
+      case (0, 1)   => Some(Direction.Up)
+      case (0, -1)  => Some(Direction.Down)
       case _ => None
