@@ -5,8 +5,8 @@
 
 package model.entities
 
+import model.utils.Position.*
 import model.utils.Position
-import model.utils.Position._
 
 /**
  * Represents the NPC character ruled by the system.

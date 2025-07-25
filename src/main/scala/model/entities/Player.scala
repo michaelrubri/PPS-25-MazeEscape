@@ -5,7 +5,7 @@
 
 package model.entities
 
-import model.utils.Position._
+import model.utils.Position.*
 
 /**
  * Represents the direction where the player wants to move.
