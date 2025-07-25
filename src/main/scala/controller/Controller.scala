@@ -8,6 +8,8 @@ package controller
 import controller.UserAction.FightLuck
 import model.Game
 import model.map.{DoorCell, FloorCell}
+import model.utils.Position.*
+import model.utils.Position
 import view.GameView
 import view.utils.*
 
@@ -20,7 +22,7 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
   private def initEventBus(): Unit = 
     EventBus.subscribe {
       case clickEvent: CellClickEvent =>
-        val position = (clickEvent.getX, clickEvent.getY)
+        val position = Position(clickEvent.getX, clickEvent.getY)
         onAction(UserAction.ClickCell(position))
       case _ => ()
     }
@@ -93,8 +95,8 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
 
     case UserAction.InvalidAction(error) => view.showMessage(s"(Controller) Invalid action: $error")
 
-  private def handleClick(position: (Int, Int)): Unit =
-    game.maze.getCell(position._1, position._2) match
+  private def handleClick(position: Position): Unit =
+    game.maze.getCell(position.x, position.y) match
 
       case _: FloorCell => onAction(UserAction.AttemptMove(position))
 

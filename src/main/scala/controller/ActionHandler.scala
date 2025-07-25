@@ -6,6 +6,7 @@
 package controller
 
 import model.entities.Guardian
+import model.utils.Position.*
 
 /**
  * Represents all the actions a user can perform.
@@ -22,31 +23,37 @@ object UserAction:
    *
    * @param pos position of the cell.
    */
-  case class ClickCell(pos: (Int, Int)) extends UserAction
+  case class ClickCell(pos: Position) extends UserAction
 
   /**
    * Tries to move on another cell.
    *
    * @param pos the new position.
    */
-  case class AttemptMove(pos: (Int, Int)) extends UserAction
+  case class AttemptMove(pos: Position) extends UserAction
 
   /**
    * Tries to open the door.
    *
    * @param pos position of the door.
+   * @param answer response provided by the user.
    */
-  case class AttemptOpenDoor(pos: (Int, Int), answer: String) extends UserAction
+  case class AttemptOpenDoor(pos: Position, answer: String) extends UserAction
 
   /**
    * Represents the challenge with a guardian
    * based on solving a logical problem.
+   * 
+   * @param guardian the guardian to fight.
+   * @param answer response provided by the user.
    */
   case class FightLogic(guardian: Guardian, answer: String) extends UserAction
 
   /**
    * Represents the challenge with a guardian
    * based on the roll of a die.
+   * 
+   * @param guardian the guardian to fight.
    */
   case class FightLuck(guardian: Guardian) extends UserAction
 
