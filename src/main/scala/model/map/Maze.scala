@@ -6,7 +6,8 @@
 package model.map
 
 import model.puzzle.{Puzzle, PuzzleRepository}
-
+import model.utils.{GameSettings, Position}
+import model.utils.Position.*
 import scala.reflect.ClassTag
 import scala.util.Random
 
@@ -86,8 +87,8 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
   /**
    * Provides the cell based on spatial coordinates.
    *
-   * @param x the x-axis.
-   * @param y the y-axis.
+   * @param x the x-coordinate.
+   * @param y the y-coordinate.
    * @return the cell based on the specified coordinates.
    */
   def getCell(x: Int, y: Int): Cell = grid(x)(y)
@@ -121,35 +122,36 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @param position the coordinates of the cell.
    * @return true if the cell can be walked on, false otherwise.
    */
-  def isWalkable(position: (Int, Int)): Boolean =
-    getCell(position._1, position._2) match
+  def isWalkable(position: Position): Boolean =
+    getCell(position.x, position.y) match
       case _: FloorCell                   => true
       case door: DoorCell if door.isOpen  => true
       case _                              => false
 
   /**
    * Checks if the user has opened the door successfully and moved to that cell.
+   * The door is considered an exit only if the door belongs to the last level of the maze.
    *
    * @param position the coordinates of the cell.
    * @return true if the user has walked on an open door, false otherwise.
    */
-  def isExit(position: (Int, Int)): Boolean =
-    getCell(position._1, position._2) match
+  def isExit(position: Position): Boolean =
+    getCell(position.x, position.y) match
       case door: DoorCell => door.isOpen
       case _              => false
   
   /**
    * Selects a random floor cell of the maze.
    *
-   * @return the coordinates of the floor cell.
+   * @return the position of the floor cell.
    */
-  def randomFloorCell(): (Int, Int) =
+  def randomFloorCell(): Position =
     val rand = new Random()
     val floorCells = for
       y <- 0 until size/2
       x <- 0 until size/2
       if grid(x)(y).isInstanceOf[FloorCell]
-    yield (x, y)
+    yield Position(x, y)
     floorCells(rand.nextInt(floorCells.length))
       
 /**
@@ -209,13 +211,12 @@ object Maze:
    *
    * @param guardiansNumber the number of guardians to spawn.
    * @param maze context parameter to get the maze in the scope.
-   * @return a list of guardians.
+   * @return a list of guardians' position.
    */
-  def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[(Int, Int)] =
+  def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[Position] =
     val guardiansPosition = for
-      x <- 1 until maze.size - 1
-      y <- 1 until maze.size - 1
-      guardianPosition = (x, y)
+      x <- 0 until maze.size - 1
+      y <- 0 until maze.size - 1
       if maze.getCell(x, y).isInstanceOf[FloorCell]
-    yield guardianPosition
+    yield Position(x, y)
     Random.shuffle(guardiansPosition.toList).take(guardiansNumber)
