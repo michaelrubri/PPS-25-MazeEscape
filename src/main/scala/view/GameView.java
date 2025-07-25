@@ -1,13 +1,19 @@
+/*
+ * Copyright (c) 2025 "Maze Escape"
+ * Licensed under the MIT License
+ */
+
 package view;
 
 import model.Game;
+import model.entities.Guardian;
+import model.entities.Player;
 import model.map.*;
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import model.*;
 import scala.Function1;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
