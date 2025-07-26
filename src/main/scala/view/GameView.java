@@ -24,13 +24,13 @@ public class GameView extends JFrame implements View  {
 
     private final Map<Pair<Integer, Integer>, JButton> buttons = new HashMap<>();
     private final Game game;
-    private final Maze maze;
+    private Maze maze;
     private final JLabel scoreLabel;
     private final JLabel livesLabel;
 
     public GameView(Game game) {
         this.game = game;
-        this.maze = game.maze();
+        this.maze = game.getMaze();
         int size = maze.size();
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setLayout(new BorderLayout());
@@ -82,6 +82,7 @@ public class GameView extends JFrame implements View  {
     public void updateView() {
         SwingUtilities.invokeLater(() -> {
             // Read the updated state
+            maze = game.getMaze();
             Player player = game.player();
             Tuple2<Object, Object> playerPos = player.position();
             int px = (Integer) playerPos._1();
