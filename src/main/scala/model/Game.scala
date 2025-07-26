@@ -14,25 +14,36 @@ import scala.compiletime.uninitialized
 import scala.util.Random
 
 class Game(val settings: GameSettings):
-  given maze: Maze = Maze.generate(settings.mazeSize)
+  /*given maze: Maze = Maze.generate(settings.mazeSize)
   var player: Player = Player(maze.randomFloorCell(), settings.numLives, 0)
-  var guardians: List[Guardian] = Maze.spawnGuardians(settings.numGuardians).map{case Position(x, y) => Guardian(Position(x, y))}
+  var guardians: List[Guardian] =
+    Maze.spawnGuardians(settings.numGuardians).map{case Position(x, y) => Guardian(Position(x, y))}*/
+  private var maze: Maze = uninitialized
+  var player: Player = uninitialized
+  var guardians: List[Guardian] = uninitialized
   private var doors: List[DoorCell] = uninitialized
   private var currentTurn: Int = uninitialized
   private var isFinished: Boolean = uninitialized
   private var isVictory: Boolean = uninitialized
   private var currentPuzzle: Option[Puzzle] = uninitialized
 
-  def finished(): Boolean = isFinished
-
-  def victory(): Boolean = isVictory
-
   def startGame(): Unit =
+    maze = Maze.generate(settings.mazeSize)
+    player = Player(maze.randomFloorCell(), settings.numLives, 0)
+    guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(x, y) => Guardian(Position(x, y)) }
     doors = maze.doorCells
     currentTurn = 0
     isFinished = false
     isVictory = false
     currentPuzzle = None
+
+  implicit def givenMaze: Maze = maze
+
+  def finished(): Boolean = isFinished
+
+  def victory(): Boolean = isVictory
+  
+  def getMaze: Maze = maze
 
   private inline def unless(condition: => Boolean)(block: => Unit): Unit =
     if !condition then block
