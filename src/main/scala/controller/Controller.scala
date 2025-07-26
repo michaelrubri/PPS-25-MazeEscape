@@ -15,7 +15,7 @@ import view.utils.*
 
 class Controller(view: GameView, game: Game) extends UserActionHandler:
 
-  game.startGame()
+  // game.startGame()
   view.updateView()
   initEventBus()
   
@@ -92,11 +92,12 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
     case UserAction.Restart =>
       game.startGame()
       view.updateView()
+      scala.runtime.BoxedUnit.UNIT
 
     case UserAction.InvalidAction(error) => view.showMessage(s"(Controller) Invalid action: $error")
 
   private def handleClick(position: Position): Unit =
-    game.maze.getCell(position.x, position.y) match
+    game.getMaze.getCell(position.x, position.y) match
 
       case _: FloorCell => onAction(UserAction.AttemptMove(position))
 
