@@ -106,8 +106,6 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @return a list of door cells.
    */
   def doorCells: List[DoorCell] = cellsOfType[DoorCell]
-  
-  // alternative to cellsOfType and doorCells
 
   /**
    * Provides all the cells of the maze.
@@ -153,7 +151,7 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
       if grid(x)(y).isInstanceOf[FloorCell]
     yield Position(x, y)
     floorCells(rand.nextInt(floorCells.length))
-      
+
 /**
  * The companion object of class Maze. It has the responsibility to create the maze
  * and generates the guardians.
@@ -181,7 +179,6 @@ object Maze:
         if isInBounds(nx, ny) && grid(ny)(nx) == WallCell() then
           grid = grid.updated(midY, grid(midY).updated(midX, FloorCell()))
           carve(nx, ny)
-
       }
 
     carve(size - 1, size - 2)
@@ -192,9 +189,7 @@ object Maze:
     if (grid(exitY)(exitX) == WallCell()) {
       val adjacent = List((exitX - 1, exitY), (exitX, exitY - 1))
         .filter { case (x, y) => isInBounds(x, y) && grid(y)(x) == FloorCell() }
-
       if (adjacent.nonEmpty) {
-
         val (connX, connY) = adjacent.head
         grid = grid.updated(exitY, grid(exitY).updated(exitX, FloorCell()))
         grid = grid.updated(connY, grid(connY).updated(connX, FloorCell()))
