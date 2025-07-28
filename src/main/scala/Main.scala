@@ -3,17 +3,17 @@
  * Licensed under the MIT License
  */
 
-import model.*
+import controller.Controller
+import model.Game
 import model.utils.GameSettings
-import view.*
-import controller.*
-import java.util.function.Consumer
+import view.{GameView, MenuView}
 
 object Main extends App:
-     new MenuView((difficulty: String) => {
-       val gameSettings: GameSettings = GameSettings.fromDifficulty(difficulty)
-       val game: Game = Game(gameSettings)
-       game.startGame()
-       val view: GameView = GameView(game)
-       val controller: Controller = Controller(view, game)
-     })
+
+  new MenuView(difficulty => {
+    val gameSettings = GameSettings.fromDifficulty(difficulty)
+    val game = Game(gameSettings)
+    game.startGame()
+    val view = GameView(game)
+    val controller = Controller(view, game)
+  })
