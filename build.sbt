@@ -8,6 +8,9 @@ lazy val root = project
 
     scalaVersion := scala3Version,
 
-    libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.2" % Test,
-    libraryDependencies += "it.unibo.alice.tuprolog" % "tuprolog" % "3.3.0"
+      libraryDependencies ++= Seq(
+          "org.junit.jupiter" % "junit-jupiter-api" % "5.10.0" % Test,
+          "org.junit.jupiter" % "junit-jupiter-engine" % "5.10.0" % Test,
+          "it.unibo.alice.tuprolog" % "tuprolog" % "3.3.0"
+      )
   )
