@@ -44,5 +44,5 @@ class GuardianTest:
   @Test
   def testUpdatePosition(): Unit =
     val position = Position(2, 2)
-    guardian.updatePosition(position)
-    assertEquals(position, guardian.position, "The guardian should be in the new position")
+    val updatedGuardian = guardian.updatePosition(position)
+    assertEquals(position, updatedGuardian.position, "The guardian should be in the new position")
