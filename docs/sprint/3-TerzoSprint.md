@@ -30,7 +30,7 @@ Deadline sprint: 28/07/2025
 
 **Michael Rubri:**
 - Sviluppo del sistema di strategia per l'entità **Guardian**.
-- Estensione entità **Player**.
+- Aggiornamento entità **Player**.
 - Introduzione modulo **Position**.
 - Revisione del sistema a seguito di modifiche.
 
@@ -39,3 +39,10 @@ Deadline sprint: 28/07/2025
 - Miglioramento della view tramite l'introduzione di menu e statistiche.
 - Rifattorizzazione del controller.
 - Revisione del sistema a seguito di modifiche.
+
+---
+
+## Revisione dello sprint - 28/07/2025
+
+Il team ha raggiunto tutti gli obiettivi precedentemente definiti. Il sistema risulta attualmente giocabile e con le
+modifiche sostanziali apportate in questo sprint si procederà con il rilascio della versione 1.0.0. 

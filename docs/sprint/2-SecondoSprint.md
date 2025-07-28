@@ -29,7 +29,7 @@ Deadline sprint: 21/07/2025
 ## Divisione del lavoro
 
 **Michael Rubri:**
-- Revisione codice entità Player e Guardian.
+- Revisione codice entità.
 - Estensione del comportamento dei Guardian.
 - Revisione del sistema a seguito di modifiche.
 
