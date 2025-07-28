@@ -7,20 +7,19 @@ package model
 
 import model.entities.{Direction, Guardian, Player}
 import model.map.{DoorCell, Maze}
+import model.prolog.Scala2Prolog
 import model.puzzle.{Puzzle, PuzzleRepository}
-import model.utils.Position._
+import model.strategies.GuardianStrategy
+import model.utils.Position.*
 import model.utils.{GameSettings, Position}
 import scala.compiletime.uninitialized
 import scala.util.Random
 
 class Game(val settings: GameSettings):
-  /*given maze: Maze = Maze.generate(settings.mazeSize)
-  var player: Player = Player(maze.randomFloorCell(), settings.numLives, 0)
-  var guardians: List[Guardian] =
-    Maze.spawnGuardians(settings.numGuardians).map{case Position(x, y) => Guardian(Position(x, y))}*/
-  private var maze: Maze = uninitialized
   var player: Player = uninitialized
   var guardians: List[Guardian] = uninitialized
+  private var maze: Maze = uninitialized
+  private var guardianStrategy: GuardianStrategy = uninitialized
   private var doors: List[DoorCell] = uninitialized
   private var currentTurn: Int = uninitialized
   private var isFinished: Boolean = uninitialized
@@ -31,6 +30,9 @@ class Game(val settings: GameSettings):
     maze = Maze.generate(settings.mazeSize)
     player = Player(maze.randomFloorCell(), settings.numLives, 0)
     guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(x, y) => Guardian(Position(x, y)) }
+    val theory = model.prolog.MazePrologTheory(maze)
+    val engine = Scala2Prolog.mkPrologEngine(theory)
+    guardianStrategy = new GuardianStrategy(engine)
     doors = maze.doorCells
     currentTurn = 0
     isFinished = false
@@ -42,7 +44,7 @@ class Game(val settings: GameSettings):
   def finished(): Boolean = isFinished
 
   def victory(): Boolean = isVictory
-  
+
   def getMaze: Maze = maze
 
   private inline def unless(condition: => Boolean)(block: => Unit): Unit =
@@ -50,16 +52,16 @@ class Game(val settings: GameSettings):
 
   def updateGameState(): Unit =
     unless(isFinished) {
-      val positionsOccupied = Set(player.position)
-      val (updatedGuardians, _) = guardians.foldLeft((List.empty[Guardian], positionsOccupied)) {
-        case ((acc, occ), guardian) => 
-          val newPosition = guardian.intercept(player.position)
-          if maze.isWalkable(newPosition) && !positionsOccupied(newPosition) then
-            val updatedGuardian = guardian.updatePosition(newPosition)
-            (acc :+ updatedGuardian, occ + newPosition)
-          else (acc :+ guardian, occ)
+      val occupied = Set(player.position)
+      val moved = guardians.map { guardian =>
+        val (gx, gy) = (guardian.position.x, guardian.position.y)
+        val (px, py) = (player.position.x, player.position.y)
+        val (nx, ny) = guardianStrategy.nextMove(gx, gy, px, py)
+        val newPos = Position(nx, ny)
+        if maze.isWalkable(newPos) && !occupied(newPos) then guardian.updatePosition(newPos)
+        else guardian
       }
-      guardians = updatedGuardians
+      guardians = moved
       currentTurn += 1
       doors.foreach(_.decrementTurns())
       isFinished =
@@ -68,7 +70,7 @@ class Game(val settings: GameSettings):
         maze.isExit(player.position)
       isVictory = maze.isExit(player.position)
     }
-      
+
   def endGame(): Boolean =
     isFinished = true
     isVictory
@@ -79,8 +81,8 @@ class Game(val settings: GameSettings):
       val fromPosition = player.position
       val validMove =
         isAdjacent(fromPosition, toPosition)
-        && !isCellOccupied(toPosition)
-        && maze.isWalkable(toPosition)
+          && !isCellOccupied(toPosition)
+          && maze.isWalkable(toPosition)
       if validMove then
         directionBetween(fromPosition, toPosition).foreach(direction => player = player.move(direction))
         Right(())
