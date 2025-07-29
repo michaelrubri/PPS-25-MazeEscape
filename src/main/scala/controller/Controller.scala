@@ -97,7 +97,7 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
     case UserAction.InvalidAction(error) => view.showMessage(s"(Controller) Invalid action: $error")
 
   private def handleClick(position: Position): Unit =
-    game.getMaze.getCell(position.x, position.y) match
+    game.getMaze.getCell(position) match
 
       case _: FloorCell => onAction(UserAction.AttemptMove(position))
 
