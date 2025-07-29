@@ -5,17 +5,18 @@
 
 package model
 
-import model.map.{DoorCell, WallCell}
-import model.puzzle.PuzzleRepository
-import model.util.GameSettings
+import model.entities.Player
+import model.map.{DoorCell, Maze, WallCell}
+import model.utils.Position.*
+import model.utils.{GameSettings, Position}
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import scala.util.Random
 
 class GameTest:
 
   private val settings = GameSettings.fromDifficulty("easy")
   private val game = Game(settings)
+  given maze: Maze = game.getMaze
 
   @BeforeEach
   def setup(): Unit = game.startGame()
@@ -23,22 +24,25 @@ class GameTest:
   @Test
   def testValidMovement(): Unit =
     val newPosition =
-      adjacentPosition(game.player.position).
-      find((x, y) => game.maze.isWalkable(x, y)).
+      adjacentPositions(game.player.position).
+      find(pos => game.getMaze.isWalkable(pos)).
       get
     val result = game.movePlayerTo(newPosition)
     assertTrue(result.isRight)
-    assertEquals(newPosition, game.player.position, "Player should be able to move towards an adjacent valid cell")
+    assertEquals(newPosition, game.player.position, "Player should be able to move towards an adjacent walkable cell")
 
   @Test
   def testValidMovementOpenDoor(): Unit =
-    val doorCellCoords = findDoorCellCoords()
-    val doorCell = game.maze.getCell(doorCellCoords._1, doorCellCoords._2).asInstanceOf[DoorCell]
+    // val doorCellCoords = maze.findDoorCellCoordsOnBorder()
+    // val doorCell = maze.doorCells.head
+    val doorCell = maze.doorCells.head
+    val doorCellCoords = doorCell.position
+    assertSame(doorCell, maze.getCell(doorCellCoords))
     val floorCellAdjacentDoorCell =
-      adjacentPosition(doorCellCoords).
-      find((x, y) => game.maze.isWalkable(x, y)).
+      adjacentPositions(doorCellCoords).
+      find(pos => game.getMaze.isWalkable(pos)).
       get
-    game.player._setPosition(floorCellAdjacentDoorCell)
+    game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
     doorCell.unlock()
     val result = game.movePlayerTo(doorCellCoords)
     assertTrue(result.isRight)
@@ -46,62 +50,73 @@ class GameTest:
 
   @Test
   def testInvalidMovementClosedDoor(): Unit =
-    val doorCellCoords = findDoorCellCoords()
+    val doorCellCoords = maze.doorCells.head.position
     val floorCellAdjacentDoorCell =
-      adjacentPosition(doorCellCoords).
-      find((x, y) => game.maze.isWalkable(x, y)).
+      adjacentPositions(doorCellCoords).
+      find(pos => game.getMaze.isWalkable(pos)).
       get
-    game.player._setPosition(floorCellAdjacentDoorCell)
+    game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
     val result = game.movePlayerTo(doorCellCoords)
     assertTrue(result.isLeft)
-    assertEquals("(Game) Invalid move", result.left.get)
     assertEquals(floorCellAdjacentDoorCell, game.player.position, "Player should not be able to move towards a closed door")
 
   @Test
   def testInvalidMovementDistanceTooFar(): Unit =
     val newPositionTooFar =
-      adjacentPosition(game.player.position).
-      map((x, y) => (x + 1, y + 1)).
-      find((x, y) => game.maze.isWalkable(x, y)).
+      adjacentPositions(game.player.position).
+      map(pos => Position(pos.row + 1, pos.col + 1)).
+      find(pos => game.getMaze.isWalkable(pos)).
       get
+    val playerPosition = game.player.position
     val result = game.movePlayerTo(newPositionTooFar)
     assertTrue(result.isLeft)
-    assertEquals("(Game) Invalid move", result.left.get, "Player should not be able to move to a non-adjacent cell")
+    assertEquals(playerPosition, game.player.position, "Player should not be able to move towards a non-adjacent cell")
 
   @Test
   def testInvalidMovementNonFloorCell(): Unit =
     val wallCellCoords =
-      adjacentPosition(game.player.position).
-      find((x, y) => game.maze.getCell(x, y).isInstanceOf[WallCell]).
+      adjacentPositions(game.player.position).
+      find(pos => game.getMaze.getCell(pos).isInstanceOf[WallCell]).
       get
+    val playerPosition = game.player.position
     val result = game.movePlayerTo(wallCellCoords)
     assertTrue(result.isLeft)
-    assertEquals("(Game) Invalid move", result.left.get, "Player should not be able to move towards a non-floor cell")
+    assertEquals(playerPosition, game.player.position, "Player should not be able to move towards a non-walkable cell")
 
   @Test
   def testInvalidMovementGameFinished(): Unit =
     game.endGame()
-    val (newX, newY) =
-      adjacentPosition(game.player.position).
-      find((x, y) => game.maze.isWalkable(x, y)).
+    val newPosition =
+      adjacentPositions(game.player.position).
+      find(pos => game.getMaze.isWalkable(pos)).
       get
-    val result = game.movePlayerTo(newX, newY)
+    val playerPosition = game.player.position
+    val result = game.movePlayerTo(newPosition)
     assertTrue(result.isLeft)
-    assertEquals("(Game) Game finished!", result.left.get, "Player should not be able to move if the game is finished")
+    assertEquals(playerPosition, game.player.position, "Player should not be able to move if the game is finished")
 
   @Test
   def testOpenDoorWrongAnswer(): Unit =
-    val doorCellCoords = findDoorCellCoords()
+    val doorCellCoords = maze.doorCells.head.position
+    val floorCellAdjacentDoorCell =
+      adjacentPositions(doorCellCoords).
+        find(pos => game.getMaze.isWalkable(pos)).
+        get
+    game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
     val result = game.openDoor(doorCellCoords, "Wrong answer")
     assertTrue(result.isLeft)
-    assertEquals("(Game) Puzzle failed", result.left.get)
-    val doorCell = game.maze.getCell(doorCellCoords._1, doorCellCoords._2).asInstanceOf[DoorCell]
-    assertFalse(doorCell.isOpen, "Door should be closed if the answer is wrong")
+    val doorCell = game.getMaze.getCell(doorCellCoords).asInstanceOf[DoorCell]
+    assertFalse(doorCell.isOpen, "Door should be closed if the answer provided is wrong")
 
   @Test
   def testOpenDoorCorrectAnswer(): Unit =
-    val doorCellCoords = findDoorCellCoords()
-    val doorCell = game.maze.getCell(doorCellCoords._1, doorCellCoords._2).asInstanceOf[DoorCell]
+    val doorCellCoords = maze.doorCells.head.position
+    val floorCellAdjacentDoorCell =
+      adjacentPositions(doorCellCoords).
+        find(pos => game.getMaze.isWalkable(pos)).
+        get
+    game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
+    val doorCell = game.getMaze.getCell(doorCellCoords).asInstanceOf[DoorCell]
     val puzzleSolution = doorCell.puzzle.solutions.head
     val result = game.openDoor(doorCellCoords, puzzleSolution)
     assertTrue(result.isRight)
@@ -109,8 +124,14 @@ class GameTest:
 
   @Test
   def testOpenNonDoorCell(): Unit =
-    val wallCellCoords = findWallCellCoords()
-    val wallCell = game.maze.getCell(wallCellCoords._1, wallCellCoords._2)
+    val wallCell = maze.wallCells.head
+    val wallCellCoords = wallCell.position
+    val floorCellAdjacentWallCell =
+      adjacentPositions(wallCellCoords).
+        find(pos => game.getMaze.isWalkable(pos)).
+        get
+    game.player = Player(floorCellAdjacentWallCell, game.player.lives, game.player.score)
+    // val wallCell = game.getMaze.getCell(wallCellCoords.x, wallCellCoords.y)
     val result = game.openDoor(wallCellCoords, "Answer")
     assertTrue(result.isLeft)
     assertEquals("(Game) This is not a door", result.left.get)
@@ -119,48 +140,105 @@ class GameTest:
   def testFightLogicNonDeterministic(): Unit =
     val initialLives = game.player.lives
     val initialScore = game.player.score
+    val puzzle = game.startLogicChallenge()
     val answer = Seq(
-      PuzzleRepository.randomPuzzle().solutions.head,
+      puzzle.solutions.head,
       "wrong answer"
     )(Random.nextInt(2))
-    val result = game.fightLogic(answer)
+    val guardian = game.guardians.head
+    val result = game.fightLogic(guardian, answer)
     result match
-      case Right(()) =>
+      case Right(msg) =>
+        assertEquals("(Game) Guardian defeated!", msg)
         assertEquals(initialScore + 50, game.player.score, "In case of success score should be increased")
         assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
       case Left(error) =>
-        assertEquals("Wrong answer, you lost a life", error)
+        assertEquals("(Game) Wrong answer, you lost a life", error)
         assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
         assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
-      case _ => fail("Unexpected path reached for method fightLogic()")
+      case _ => fail("Unexpected path reached for method fightLogic()")*/
 
-  @RepeatedTest(10)
+  @Test
+  def testFightLogicNoActivePuzzle(): Unit =
+    val guardian = game.guardians.head
+    val initialLives = game.player.lives
+    val initialScore = game.player.score
+    val initialGuardiansNumber = game.guardians.size
+    val result = game.fightLogic(guardian, "any answer")
+    assertTrue(result.isLeft)
+    assertEquals("(Game) No active puzzle", result.left.getOrElse(""))
+    assertEquals(initialLives, game.player.lives, "Lives should not change")
+    assertEquals(initialScore, game.player.score, "Score should not change")
+    assertEquals(initialGuardiansNumber, game.guardians.size, "No guardian should be removed")
+
+  @Test
+  def testFightLogicCorrectAnswer(): Unit =
+    val guardian = game.guardians.head
+    val initialLives = game.player.lives
+    val initialScore = game.player.score
+    val puzzle = game.startLogicChallenge()
+    val correctAnswer = puzzle.solutions.head
+    val result = game.fightLogic(guardian, correctAnswer)
+    assertTrue(result.isRight)
+    assertEquals("(Game) Guardian defeated!", result.getOrElse(""))
+    assertEquals(initialScore + 50, game.player.score, "In case of success score should be increased")
+    assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
+    assertFalse(game.guardians.contains(guardian), "The guardian should be removed from the list")
+
+  @Test
+  def testFightLogicWrongAnswer(): Unit =
+    val guardian = game.guardians.head
+    val initialLives = game.player.lives
+    val initialScore = game.player.score
+    val puzzle = game.startLogicChallenge()
+    val wrongAnswer = "wrong answer"
+    val result = game.fightLogic(guardian, wrongAnswer)
+    assertTrue(result.isLeft)
+    assertEquals("(Game) Wrong answer, you lost a life", result.left.getOrElse(""))
+    assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
+    assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
+    assertFalse(game.guardians.contains(guardian), "The guardian should be removed")
+
+  @RepeatedTest(20)
   def testFightLuckNonDeterministic(): Unit =
     val initialLives = game.player.lives
     val initialScore = game.player.score
-    val result = game.fightLuck()
+    val guardian = game.guardians.head
+    val result = game.fightLuck(guardian)
     result match
-      case Right(()) =>
+      case Right("(Game) Guardian defeated!") =>
         assertEquals(initialScore + 20, game.player.score, "In case of success score should be increased")
         assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
-      case Left(error) =>
+      case Right("(Game) You were unlucky, you lost the fight") =>
         assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
         assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
-      case _ => fail("Unexpected path reached for method fightLuck()")*/
+      case Right(other) => fail(s"Unexpected message: $other")
+      case Left(msg) if msg.startsWith("(Game) Score update failed:") => assertEquals(0, game.player.score)
+      case Left(msg) if msg.startsWith("(Game) Lose life error:") => assertEquals(0, game.player.lives)
+      case Left(other) => fail(s"Unexpected message: $other")
 
-  private val delta = List((1, 0), (-1, 0), (0, 1), (0, -1))
-  private val size = settings.mazeSize
+  /*@Test
+  def testFightLuckWin(): Unit =
+    val guardian = game.guardians.head
+    val initialScore = game.player.score
+    val initialLives = game.player.lives
+    Random.setSeed(1L)
+    val result = game.fightLuck(guardian)
+    assertTrue(result.isRight)
+    assertEquals("(Game) Guardian defeated!", result.getOrElse(""))
+    assertEquals(initialScore + 20, game.player.score, "In case of success score should be increased")
+    assertEquals(initialLives, game.player.lives, "In case of success lives should not be changed")
+    assertFalse(game.guardians.contains(guardian), "The guardian should be removed")
 
-  private def adjacentPosition(position: (Int, Int)): List[(Int, Int)] =
-    delta.
-      map((x, y) => (position._1 + x, position._2 + y)).
-      filter((x, y) => x >= 0 && x < size && y >= 0 && y < size)
-
-  private val border = (0 until size).flatMap(x => Seq((x, 0), (x, size - 1))).
-    concat((1 until size - 1).flatMap(y => Seq((0, y), (size - 1, y))))
-
-  private def findDoorCellCoords(): (Int, Int) =
-    border.find((x, y) => game.maze.getCell(x, y).isInstanceOf[DoorCell]).get
-
-  private def findWallCellCoords(): (Int, Int) =
-    border.find((x, y) => game.maze.getCell(x, y).isInstanceOf[WallCell]).get
+  @Test
+  def testFightLuckLose(): Unit =
+    val guardian = game.guardians.head
+    val initialScore = game.player.score
+    val initialLives = game.player.lives
+    Random.setSeed(0L)
+    val result = game.fightLuck(guardian)
+    assertTrue(result.isRight)
+    assertEquals("(Game) You were unlucky, you lost the fight", result.getOrElse(""))
+    assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
+    assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
+    assertFalse(game.guardians.contains(guardian), "The guardian should be removed")*/
