@@ -14,6 +14,9 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import model.utils.Position;
+import model.utils.Position$;
 import scala.Function1;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
@@ -84,6 +87,7 @@ public class GameView extends JFrame implements View  {
             // Read the updated state
             maze = game.getMaze();
             Player player = game.player();
+            Position$ posObj = Position$.MODULE$;
             Tuple2<Object, Object> playerPos = player.position();
             int px = (Integer) playerPos._1();
             int py = (Integer) playerPos._2();
@@ -102,7 +106,7 @@ public class GameView extends JFrame implements View  {
                 for (int y = 0; y < maze.size(); y++) {
                     Pair<Integer, Integer> pos = new Pair<>(x, y);
                     JButton button = buttons.get(pos);
-                    Cell cell = maze.getCell(x, y);
+                    Cell cell = maze.getCell(new Tuple2<>(x, y));
                     if (cell instanceof FloorCell) button.setBackground(Color.WHITE);
                     else if (cell instanceof WallCell) button.setBackground(Color.BLACK);
                     else button.setBackground(Color.YELLOW);
@@ -114,7 +118,8 @@ public class GameView extends JFrame implements View  {
                         button.setText("웃");
                     }
                     // Define if the cell is clickable
-                    boolean isAdjacent = game.isAdjacent(new Tuple2<>(px, py), new Tuple2<>(x, y));
+                    // boolean isAdjacent = game.isAdjacent(new Tuple2<>(px, py), new Tuple2<>(x, y));
+                    boolean isAdjacent = posObj.isAdjacentTwoArgs(new Tuple2<>(px, py), new Tuple2<>(x, y));
                     boolean isWalkable = maze.isWalkable(new Tuple2<>(x, y));
                     boolean hasGuardian = guardiansPos.containsKey(pos);
                     boolean isDoor = cell instanceof DoorCell;
