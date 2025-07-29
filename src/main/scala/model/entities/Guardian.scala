@@ -44,9 +44,9 @@ object Guardian:
 
 private case class GuardianImpl(position: Position) extends Guardian:
   override def intercept(target: Position): Position =
-    val (dx, dy) = (target.x - position.x, target.y - position.y)
+    val (dx, dy) = (target.row - position.row, target.col - position.col)
     (dx, dy) match
-      case (dx, dy) if dx.abs + dy.abs <= 1 => Position(position.x, position.y)
-      case (dx, dy) if dx.abs >= dy.abs => Position(position.x + dx.sign, position.y)
-      case (_, dy) => Position(position.x, position.y + dy.sign)
+      case (dx, dy) if dx.abs + dy.abs <= 1 => Position(position.row, position.col)
+      case (dx, dy) if dx.abs >= dy.abs => Position(position.row + dx.sign, position.col)
+      case (_, dy) => Position(position.row, position.col + dy.sign)
   override private[model] def updatePosition(newPosition: Position): Guardian = copy(position = newPosition)
