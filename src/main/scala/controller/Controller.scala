@@ -44,7 +44,7 @@ class Controller(view: GameView, game: Game) extends UserActionHandler:
                 scala.runtime.BoxedUnit.UNIT
             )
           else
-            game.guardianAtPlayer().headOption.foreach(guardian =>
+            game.guardiansAtPlayer().headOption.foreach(guardian =>
               view.showFightChoice { choice =>
                 if choice == "logic" then
                   val puzzle = game.startLogicChallenge()
