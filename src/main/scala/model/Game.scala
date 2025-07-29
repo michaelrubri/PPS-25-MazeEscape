@@ -5,7 +5,7 @@
 
 package model
 
-import model.entities.{Direction, Guardian, Player}
+import model.entities.{Guardian, Player}
 import model.map.{DoorCell, Maze}
 import model.prolog.Scala2Prolog
 import model.puzzle.{Puzzle, PuzzleRepository}
@@ -29,7 +29,7 @@ class Game(val settings: GameSettings):
   def startGame(): Unit =
     maze = Maze.generate(settings.mazeSize)
     player = Player(maze.randomFloorCell(), settings.numLives, 0)
-    guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(x, y) => Guardian(Position(x, y)) }
+    guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(row, col) => Guardian(Position(row, col)) }
     val theory = model.prolog.MazePrologTheory(maze)
     val engine = Scala2Prolog.mkPrologEngine(theory)
     guardianStrategy = new GuardianStrategy(engine)
@@ -54,8 +54,8 @@ class Game(val settings: GameSettings):
     unless(isFinished) {
       val occupied = Set(player.position)
       val moved = guardians.map { guardian =>
-        val (gx, gy) = (guardian.position.x, guardian.position.y)
-        val (px, py) = (player.position.x, player.position.y)
+        val (gx, gy) = (guardian.position.row, guardian.position.col)
+        val (px, py) = (player.position.row, player.position.col)
         val (nx, ny) = guardianStrategy.nextMove(gx, gy, px, py)
         val newPos = Position(nx, ny)
         if maze.isWalkable(newPos) && !occupied(newPos) then guardian.updatePosition(newPos)
@@ -80,20 +80,20 @@ class Game(val settings: GameSettings):
     else
       val fromPosition = player.position
       val validMove =
-        isAdjacent(fromPosition, toPosition)
-          && !isCellOccupied(toPosition)
-          && maze.isWalkable(toPosition)
+        fromPosition.isAdjacent(toPosition)
+        && !isCellOccupied(toPosition)
+        && maze.isWalkable(toPosition)
       if validMove then
-        directionBetween(fromPosition, toPosition).foreach(direction => player = player.move(direction))
+        fromPosition.directionBetween(toPosition).foreach(direction => player = player.move(direction))
         Right(())
       else Left("(Game) Invalid move")
 
   private def isCellOccupied(position: Position): Boolean = guardians.exists(_.position == position)
 
-  def openDoor(at: Position, userAnswer: String): Either[String, String] =
-    if !isAdjacent(player.position, at) then Left("(Game) Player should be adjacent to the door")
+  def openDoor(doorPosition: Position, userAnswer: String): Either[String, String] =
+    if !player.position.isAdjacent(doorPosition) then Left("(Game) Player should be adjacent to the door")
     else
-      maze.getCell(at.x, at.y) match
+      maze.getCell(doorPosition) match
         case door: DoorCell if door.isOpen => Left("(Game) Door is already open")
         case door: DoorCell if door.isBlocked => Left(s"(Game) Door is blocked for ${door.turnsLeft} turns")
         case door: DoorCell =>
@@ -161,17 +161,5 @@ class Game(val settings: GameSettings):
     guardians = guardians.filterNot(_ == guardian)
     result
 
-  def guardianAtPlayer(): List[Guardian] =
-    guardians.filter(guardian => isAdjacent(guardian.position, player.position))
-
-  def isAdjacent(from: Position, to: Position): Boolean =
-    val (dx, dy) = ((from.x - to.x).abs, (from.y - to.y).abs)
-    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
-
-  private def directionBetween(from: Position, to: Position): Option[Direction] =
-    (to.x - from.x, to.y - from.y) match
-      case (1, 0)   => Some(Direction.Right)
-      case (-1, 0)  => Some(Direction.Left)
-      case (0, 1)   => Some(Direction.Up)
-      case (0, -1)  => Some(Direction.Down)
-      case _ => None
+  def guardiansAtPlayer(): List[Guardian] =
+    guardians.filter(guardian => player.position.isAdjacent(guardian.position))
