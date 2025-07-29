@@ -57,3 +57,12 @@ class PlayerTest:
     assertTrue(result.isRight)
     val updatedPlayer = result.getOrElse(fail("Expected Right"))
     assertEquals(50, updatedPlayer.score, "The player's score should be increased")
+
+  @Test
+  def testInvalidAddScore(): Unit =
+    val result = player.addScore(-10)
+    assertTrue(result.isLeft)
+    result match
+      case Left(PlayerError.NegativeScore(invalid)) =>
+        assertEquals(-10, invalid)
+      case other => fail(s"Errore inatteso: $other")

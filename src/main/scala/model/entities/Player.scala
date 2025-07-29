@@ -95,5 +95,7 @@ private[entities] case class PlayerImpl(position: Position,
     else Right(copy(lives = lives - 1))
   override def addScore(points: Int): Result[Player] =
     val newScore = score + points
-    if newScore < 0 then Left(PlayerError.NegativeScore(points))
+    if newScore < 0 then
+      copy(score = 0)
+      Left(PlayerError.NegativeScore(points))
     else Right(copy(score = newScore))
