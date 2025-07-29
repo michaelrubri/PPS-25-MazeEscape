@@ -15,24 +15,25 @@ import scala.util.Random
  * The generic cell used to generate the maze.
  */
 sealed trait Cell:
-  def toString: String
+  def position: Position
+  override def toString: String
 
 /**
  * Represents a wall cell.
  */
-case class WallCell() extends Cell:
+case class WallCell(position: Position) extends Cell:
   override def toString: String = "#"
 
 /**
  * Represents a floor cell.
  */
-case class FloorCell() extends Cell:
+case class FloorCell(position: Position) extends Cell:
   override def toString: String = " "
 
 /**
  * Represents a door cell.
  */
-case class DoorCell(puzzle: Puzzle) extends Cell:
+case class DoorCell(position: Position, puzzle: Puzzle) extends Cell:
   private var open: Boolean = false
   private var blockedTurns: Int = 0
   
@@ -87,11 +88,10 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
   /**
    * Provides the cell based on spatial coordinates.
    *
-   * @param x the x-coordinate.
-   * @param y the y-coordinate.
+   * @param position the position of the cell.
    * @return the cell based on the specified coordinates.
    */
-  def getCell(x: Int, y: Int): Cell = grid(x)(y)
+  def getCell(position: Position): Cell = grid(position.row)(position.col)
 
   /**
    * Provides the cells of the same type.
@@ -108,6 +108,13 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
   def doorCells: List[DoorCell] = cellsOfType[DoorCell]
 
   /**
+   * Provides all the wall cells of the maze.
+   *
+   * @return a list of wall cells.
+   */
+  def wallCells: List[WallCell] = cellsOfType[WallCell]
+
+  /**
    * Provides all the cells of the maze.
    *
    * @return a list of generic cells.
@@ -121,7 +128,7 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @return true if the cell can be walked on, false otherwise.
    */
   def isWalkable(position: Position): Boolean =
-    getCell(position.x, position.y) match
+    getCell(position) match
       case _: FloorCell                   => true
       case door: DoorCell if door.isOpen  => true
       case _                              => false
@@ -134,7 +141,7 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @return true if the user has walked on an open door, false otherwise.
    */
   def isExit(position: Position): Boolean =
-    getCell(position.x, position.y) match
+    getCell(position) match
       case door: DoorCell => door.isOpen
       case _              => false
   
@@ -145,12 +152,28 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    */
   def randomFloorCell(): Position =
     val rand = new Random()
-    val floorCells = for
-      y <- 0 until size/2
-      x <- 0 until size/2
-      if grid(x)(y).isInstanceOf[FloorCell]
-    yield Position(x, y)
+    val floorCells =
+      for
+        row <- 0 until size/2
+        col <- 0 until size/2
+        if getCell(Position(row, col)).isInstanceOf[FloorCell]
+      yield Position(row, col)
     floorCells(rand.nextInt(floorCells.length))
+
+  /*
+  /**
+   * Provides all border cells.
+   */
+  private def border(): Seq[Position] =
+    (0 until size).flatMap(x => Seq(Position(x, 0), Position(x, size - 1))).
+    concat((1 until size - 1).flatMap(y => Seq(Position(0, y), Position(size - 1, y))))
+
+  def findDoorCellCoordsOnBorder(): Position =
+    border().find(pos => getCell(pos.x, pos.y).isInstanceOf[DoorCell]).get
+
+  def findWallCellCoordsOnBorder(): Position =
+    border().find(pos => getCell(pos.x, pos.y).isInstanceOf[WallCell]).get
+  */
 
 /**
  * The companion object of class Maze. It has the responsibility to create the maze
@@ -158,49 +181,44 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
  */
 object Maze:
 
-  def generate(size: Int): Maze = {
+  def generate(size: Int): Maze =
     val rand = new scala.util.Random()
-    var grid = Vector.fill(size, size)(WallCell(): Cell)
+    var grid: Vector[Vector[Cell]] =
+      Vector.tabulate(size, size) { (row, col) =>
+        WallCell(Position(row, col))
+      }
 
-    def isInBounds(x: Int, y: Int): Boolean =
-      x >= 0 && y >= 0 && x < size && y < size
+    def isInBounds(row: Int, col: Int): Boolean =
+      row >= 0 && col >= 0 && row < size && col < size
 
-    def carve(x: Int, y: Int): Unit =
-      grid = grid.updated(y, grid(y).updated(x, FloorCell()))
+    def carve(row: Int, col: Int): Unit =
+      grid = grid.updated(row, grid(row).updated(col, FloorCell(Position(row, col))))
 
       val directions = rand.shuffle(List((2, 0), (-2, 0), (0, 2), (0, -2)))
 
-      directions.foreach { case (dx, dy) =>
-        val nx = x + dx
-        val ny = y + dy
-        val midX = x + dx / 2
-        val midY = y + dy / 2
+      for (dRow, dCol) <- directions do
+        val newRow = row + dRow
+        val newCol = col + dCol
+        val midRow = row + dRow / 2
+        val midCol = col + dCol / 2
 
-        if isInBounds(nx, ny) && grid(ny)(nx) == WallCell() then
-          grid = grid.updated(midY, grid(midY).updated(midX, FloorCell()))
-          carve(nx, ny)
-      }
+        if isInBounds(newRow, newCol) && grid(newRow)(newCol).isInstanceOf[WallCell] then
+          grid = grid.updated(midRow, grid(midRow).updated(midCol, FloorCell(Position(midRow, midCol))))
+          carve(newRow, newCol)
 
-    carve(size - 1, size - 2)
+    // Defining exit door
+    val exitRow = size - 2
+    val exitCol = size - 1
+    carve(exitRow, exitCol)
 
-    // Conecting exit with the FloorCells
-    val exitX = size - 1
-    val exitY = size - 2
-    if (grid(exitY)(exitX) == WallCell()) {
-      val adjacent = List((exitX - 1, exitY), (exitX, exitY - 1))
-        .filter { case (x, y) => isInBounds(x, y) && grid(y)(x) == FloorCell() }
-      if (adjacent.nonEmpty) {
-        val (connX, connY) = adjacent.head
-        grid = grid.updated(exitY, grid(exitY).updated(exitX, FloorCell()))
-        grid = grid.updated(connY, grid(connY).updated(connX, FloorCell()))
-      }
-    }
-
-    grid = grid.updated(size - 2, grid(size - 2).updated(size - 1, DoorCell(PuzzleRepository.randomPuzzle())))
+    // Add exit door
+    grid =
+      grid.updated(
+        exitRow,
+        grid(exitRow).updated(exitCol, DoorCell(Position(exitRow, exitCol), PuzzleRepository.randomPuzzle())))
 
     new Maze(size, grid)
-  }
-  
+
   /**
    * Generates guardian entities randomly on the map.
    *
@@ -209,9 +227,10 @@ object Maze:
    * @return a list of guardians' position.
    */
   def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[Position] =
-    val guardiansPosition = for
-      x <- 0 until maze.size - 1
-      y <- 0 until maze.size - 1
-      if maze.getCell(x, y).isInstanceOf[FloorCell]
-    yield Position(x, y)
+    val guardiansPosition =
+      for
+        row <- 0 until maze.size
+        col <- 0 until maze.size
+        if maze.getCell(Position(row, col)).isInstanceOf[FloorCell]
+      yield Position(row, col)
     Random.shuffle(guardiansPosition.toList).take(guardiansNumber)
