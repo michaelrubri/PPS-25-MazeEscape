@@ -52,16 +52,22 @@ class Game(val settings: GameSettings):
 
   def updateGameState(): Unit =
     unless(isFinished) {
-      val occupied = Set(player.position)
-      val moved = guardians.map { guardian =>
-        val (gx, gy) = (guardian.position.row, guardian.position.col)
-        val (px, py) = (player.position.row, player.position.col)
-        val (nx, ny) = guardianStrategy.nextMove(gx, gy, px, py)
-        val newPos = Position(nx, ny)
-        if maze.isWalkable(newPos) && !occupied(newPos) then guardian.updatePosition(newPos)
-        else guardian
+      val cellsOccupied = Set(player.position)
+      val (updatedGuardians, _) = guardians.foldLeft((List.empty[Guardian], cellsOccupied)) {
+        case ((acc, occupied), guardian) =>
+          val (gx, gy) = (guardian.position.row, guardian.position.col)
+          val (px, py) = (player.position.row, player.position.col)
+          // val (nx, ny) = guardianStrategy.nextMove(gx, gy, px, py)
+          // val newPos = Position(nx, ny)
+          val newPos = guardianStrategy.nextMove(gx, gy, px, py)
+          val updatedGuardian =
+            if maze.isWalkable(newPos) && !occupied(newPos) then
+              guardian.updatePosition(newPos)
+            else
+              guardian
+          (acc :+ updatedGuardian, occupied + updatedGuardian.position)
       }
-      guardians = moved
+      guardians = updatedGuardians
       currentTurn += 1
       doors.foreach(_.decrementTurns())
       isFinished =

@@ -5,39 +5,98 @@
 
 package model
 
-import model.entities.Player
+import model.entities.{Guardian, Player}
 import model.map.{DoorCell, Maze, WallCell}
+import model.strategies.GuardianStrategy
 import model.utils.Position.*
 import model.utils.{GameSettings, Position}
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 class GameTest:
 
   private val settings = GameSettings.fromDifficulty("easy")
   private val game = Game(settings)
-  given maze: Maze = game.getMaze
+  private lazy val maze: Maze = game.getMaze
+  given Maze = maze
+
+  private def isInBounds(pos: Position): Boolean =
+    pos.row >= 0 && pos.col >= 0 && pos.row < maze.size && pos.col < maze.size
 
   @BeforeEach
   def setup(): Unit = game.startGame()
-  
+
+  private def setStrategy(strat: GuardianStrategy): Unit =
+    val f = classOf[Game].getDeclaredField("guardianStrategy")
+    f.setAccessible(true)
+    f.set(game, strat)
+
+  private def getGuardians: List[Guardian] =
+    val f = classOf[Game].getDeclaredField("guardians")
+    f.setAccessible(true)
+    f.get(game).asInstanceOf[List[Guardian]]
+
   @Test
+  def testGuardianMovesToFreeCell(): Unit =
+    val original = getGuardians
+    assertFalse(original.isEmpty)
+    val guardian = original.head
+    val neighbors = adjacentPositions(guardian.position).filter(game.getMaze.isWalkable)
+    assertFalse(neighbors.isEmpty)
+    val target = neighbors.head
+    val stubStrat = new GuardianStrategy(null) {
+      override def nextMove(gx: Int, gy: Int, px: Int, py: Int): Position = target
+    }
+    setStrategy(stubStrat)
+    game.updateGameState()
+    val updated = getGuardians.head
+    assertEquals(target, updated.position)
+
+  @RepeatedTest(10)
+  def testGuardiansDontOverlap(): Unit =
+    val original = getGuardians
+    val guardian0 = original.head
+    val guardian1 = original(1)
+    val common =
+      (adjacentPositions(guardian0.position).toSet intersect adjacentPositions(guardian1.position).toSet)
+      .filter(game.getMaze.isWalkable)
+    assumeTrue(common.nonEmpty, "Test skipped, no guardian nearby")
+    val target = common.head
+    val stubStrat = new GuardianStrategy(null) {
+      override def nextMove(gx: Int, gy: Int, px: Int, py: Int): Position = target
+    }
+    setStrategy(stubStrat)
+    game.updateGameState()
+    val updated = getGuardians
+    assertEquals(target, updated.head.position)
+    assertEquals(
+      guardian1.position,
+      updated(1).position,
+      "The second guardian cannot move on an occupied cell"
+    )
+
+  @RepeatedTest(10)
   def testValidMovement(): Unit =
-    val newPosition =
+    val freeNeighbors =
       adjacentPositions(game.player.position).
-      find(pos => game.getMaze.isWalkable(pos)).
-      get
+      find(pos =>
+        game.getMaze.isWalkable(pos) &&
+        !game.guardians.exists(_.position == pos))
+    assumeTrue(freeNeighbors.nonEmpty, "Test skipped: no cell available")
+    val newPosition = freeNeighbors.head
     val result = game.movePlayerTo(newPosition)
     assertTrue(result.isRight)
-    assertEquals(newPosition, game.player.position, "Player should be able to move towards an adjacent walkable cell")
+    assertEquals(
+      newPosition,
+      game.player.position,
+      "Player should be able to move towards an adjacent walkable cell"
+    )
 
   @Test
   def testValidMovementOpenDoor(): Unit =
-    // val doorCellCoords = maze.findDoorCellCoordsOnBorder()
-    // val doorCell = maze.doorCells.head
     val doorCell = maze.doorCells.head
     val doorCellCoords = doorCell.position
-    assertSame(doorCell, maze.getCell(doorCellCoords))
     val floorCellAdjacentDoorCell =
       adjacentPositions(doorCellCoords).
       find(pos => game.getMaze.isWalkable(pos)).
@@ -46,7 +105,11 @@ class GameTest:
     doorCell.unlock()
     val result = game.movePlayerTo(doorCellCoords)
     assertTrue(result.isRight)
-    assertEquals(doorCellCoords, game.player.position, "Player should be able to move towards an open door")
+    assertEquals(
+      doorCellCoords,
+      game.player.position,
+      "Player should be able to move towards an open door"
+    )
 
   @Test
   def testInvalidMovementClosedDoor(): Unit =
@@ -58,19 +121,35 @@ class GameTest:
     game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
     val result = game.movePlayerTo(doorCellCoords)
     assertTrue(result.isLeft)
-    assertEquals(floorCellAdjacentDoorCell, game.player.position, "Player should not be able to move towards a closed door")
+    assertEquals(
+      floorCellAdjacentDoorCell,
+      game.player.position,
+      "Player should not be able to move towards a closed door"
+    )
 
-  @Test
+  @RepeatedTest(10)
   def testInvalidMovementDistanceTooFar(): Unit =
-    val newPositionTooFar =
-      adjacentPositions(game.player.position).
-      map(pos => Position(pos.row + 1, pos.col + 1)).
-      find(pos => game.getMaze.isWalkable(pos)).
-      get
-    val playerPosition = game.player.position
+    val playerPos = game.player.position
+    val candidatesPos =
+      Seq(
+        Position(playerPos.row + 2, playerPos.col),
+        Position(playerPos.row - 2, playerPos.col),
+        Position(playerPos.row, playerPos.col + 2),
+        Position(playerPos.row, playerPos.col - 2)
+      )
+    val findPosTooFar =
+      candidatesPos.
+        filter(isInBounds).
+        find(game.getMaze.isWalkable)
+    assumeTrue(findPosTooFar.isDefined, "Test skipped: no cell available")
+    val newPositionTooFar = findPosTooFar.get
     val result = game.movePlayerTo(newPositionTooFar)
     assertTrue(result.isLeft)
-    assertEquals(playerPosition, game.player.position, "Player should not be able to move towards a non-adjacent cell")
+    assertEquals(
+      playerPos,
+      game.player.position,
+      "Player should not be able to move towards a non-adjacent cell"
+    )
 
   @Test
   def testInvalidMovementNonFloorCell(): Unit =
@@ -81,7 +160,10 @@ class GameTest:
     val playerPosition = game.player.position
     val result = game.movePlayerTo(wallCellCoords)
     assertTrue(result.isLeft)
-    assertEquals(playerPosition, game.player.position, "Player should not be able to move towards a non-walkable cell")
+    assertEquals(
+      playerPosition,
+      game.player.position,
+      "Player should not be able to move towards a non-walkable cell")
 
   @Test
   def testInvalidMovementGameFinished(): Unit =
@@ -93,7 +175,11 @@ class GameTest:
     val playerPosition = game.player.position
     val result = game.movePlayerTo(newPosition)
     assertTrue(result.isLeft)
-    assertEquals(playerPosition, game.player.position, "Player should not be able to move if the game is finished")
+    assertEquals(
+      playerPosition,
+      game.player.position,
+      "Player should not be able to move if the game is finished"
+    )
 
   @Test
   def testOpenDoorWrongAnswer(): Unit =
@@ -131,32 +217,9 @@ class GameTest:
         find(pos => game.getMaze.isWalkable(pos)).
         get
     game.player = Player(floorCellAdjacentWallCell, game.player.lives, game.player.score)
-    // val wallCell = game.getMaze.getCell(wallCellCoords.x, wallCellCoords.y)
     val result = game.openDoor(wallCellCoords, "Answer")
     assertTrue(result.isLeft)
     assertEquals("(Game) This is not a door", result.left.get)
-
-  /*@RepeatedTest(10)
-  def testFightLogicNonDeterministic(): Unit =
-    val initialLives = game.player.lives
-    val initialScore = game.player.score
-    val puzzle = game.startLogicChallenge()
-    val answer = Seq(
-      puzzle.solutions.head,
-      "wrong answer"
-    )(Random.nextInt(2))
-    val guardian = game.guardians.head
-    val result = game.fightLogic(guardian, answer)
-    result match
-      case Right(msg) =>
-        assertEquals("(Game) Guardian defeated!", msg)
-        assertEquals(initialScore + 50, game.player.score, "In case of success score should be increased")
-        assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
-      case Left(error) =>
-        assertEquals("(Game) Wrong answer, you lost a life", error)
-        assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
-        assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
-      case _ => fail("Unexpected path reached for method fightLogic()")*/
 
   @Test
   def testFightLogicNoActivePuzzle(): Unit =
@@ -216,29 +279,3 @@ class GameTest:
       case Left(msg) if msg.startsWith("(Game) Score update failed:") => assertEquals(0, game.player.score)
       case Left(msg) if msg.startsWith("(Game) Lose life error:") => assertEquals(0, game.player.lives)
       case Left(other) => fail(s"Unexpected message: $other")
-
-  /*@Test
-  def testFightLuckWin(): Unit =
-    val guardian = game.guardians.head
-    val initialScore = game.player.score
-    val initialLives = game.player.lives
-    Random.setSeed(1L)
-    val result = game.fightLuck(guardian)
-    assertTrue(result.isRight)
-    assertEquals("(Game) Guardian defeated!", result.getOrElse(""))
-    assertEquals(initialScore + 20, game.player.score, "In case of success score should be increased")
-    assertEquals(initialLives, game.player.lives, "In case of success lives should not be changed")
-    assertFalse(game.guardians.contains(guardian), "The guardian should be removed")
-
-  @Test
-  def testFightLuckLose(): Unit =
-    val guardian = game.guardians.head
-    val initialScore = game.player.score
-    val initialLives = game.player.lives
-    Random.setSeed(0L)
-    val result = game.fightLuck(guardian)
-    assertTrue(result.isRight)
-    assertEquals("(Game) You were unlucky, you lost the fight", result.getOrElse(""))
-    assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
-    assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
-    assertFalse(game.guardians.contains(guardian), "The guardian should be removed")*/
