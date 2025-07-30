@@ -7,7 +7,7 @@ package model
 
 import model.entities.{Guardian, Player}
 import model.map.{DoorCell, Maze}
-import model.prolog.Scala2Prolog
+import model.prolog.{MazePrologTheory, Scala2Prolog}
 import model.puzzle.{Puzzle, PuzzleRepository}
 import model.strategies.GuardianStrategy
 import model.utils.Position.*
@@ -18,7 +18,7 @@ import scala.util.Random
 class Game(val settings: GameSettings):
   var player: Player = uninitialized
   var guardians: List[Guardian] = uninitialized
-  private var maze: Maze = uninitialized
+  var maze: Maze = uninitialized
   private var guardianStrategy: GuardianStrategy = uninitialized
   private var doors: List[DoorCell] = uninitialized
   private var currentTurn: Int = uninitialized
@@ -32,11 +32,11 @@ class Game(val settings: GameSettings):
                          preservingLives: Int, 
                          preservingScore: Int): Unit =
     maze = Maze.generate(settings.mazeSize)
-    val theory = model.prolog.MazePrologTheory(maze)
+    val theory = MazePrologTheory(maze)
     val engine = Scala2Prolog.mkPrologEngine(theory)
     guardianStrategy = new GuardianStrategy(engine)
     player = Player(maze.randomFloorCell(), preservingLives, preservingScore)
-    guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(row, col) => Guardian(Position(row, col)) }
+    guardians = maze.spawnGuardians(settings.numGuardians).map(pos => Guardian(pos))
     doors = maze.doorCells
     currentTurn = 0
     currentPuzzle = None
@@ -89,7 +89,8 @@ class Game(val settings: GameSettings):
       }
       guardians = updatedGuardians
       currentTurn += 1
-      doors.foreach(_.decrementTurns())
+      // doors.foreach(_.decrementTurns())
+      maze = maze.decreaseTurnsLockedDoors
 
       /*isFinished =
         player.lives <= 0 ||
@@ -138,10 +139,10 @@ class Game(val settings: GameSettings):
         case door: DoorCell if door.isBlocked => Left(s"(Game) Door is blocked for ${door.turnsLeft} turns")
         case door: DoorCell =>
           if door.puzzle.checkAnswer(userAnswer) then
-            door.unlock()
+            maze = maze.unlockDoorAt(doorPosition)
             Right("(Game) Door opened")
           else
-            door.blockFor(settings.lockDoorInTurns)
+            maze = maze.blockDoorAt(doorPosition, settings.lockDoorInTurns)
             Left("(Game) Puzzle failed")
         case _ => Left("(Game) This is not a door")
 

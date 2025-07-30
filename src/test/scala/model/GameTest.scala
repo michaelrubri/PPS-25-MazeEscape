@@ -95,31 +95,31 @@ class GameTest:
 
   @Test
   def testValidMovementOpenDoor(): Unit =
-    val doorCell = maze.doorCells.head
-    val doorCellCoords = doorCell.position
+    val doorPosition = maze.doorCells.head.position
     val floorCellAdjacentDoorCell =
-      adjacentPositions(doorCellCoords).
+      adjacentPositions(doorPosition).
       find(pos => game.getMaze.isWalkable(pos)).
       get
     game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
-    doorCell.unlock()
-    val result = game.movePlayerTo(doorCellCoords)
+    val updatedMaze = maze.unlockDoorAt(doorPosition)
+    game.maze = updatedMaze
+    val result = game.movePlayerTo(doorPosition)
     assertTrue(result.isRight)
     assertEquals(
-      doorCellCoords,
+      doorPosition,
       game.player.position,
       "Player should be able to move towards an open door"
     )
 
   @Test
   def testInvalidMovementClosedDoor(): Unit =
-    val doorCellCoords = maze.doorCells.head.position
+    val doorPosition = maze.doorCells.head.position
     val floorCellAdjacentDoorCell =
-      adjacentPositions(doorCellCoords).
+      adjacentPositions(doorPosition).
       find(pos => game.getMaze.isWalkable(pos)).
       get
     game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
-    val result = game.movePlayerTo(doorCellCoords)
+    val result = game.movePlayerTo(doorPosition)
     assertTrue(result.isLeft)
     assertEquals(
       floorCellAdjacentDoorCell,
@@ -153,12 +153,12 @@ class GameTest:
 
   @Test
   def testInvalidMovementNonFloorCell(): Unit =
-    val wallCellCoords =
+    val wallPosition =
       adjacentPositions(game.player.position).
       find(pos => game.getMaze.getCell(pos).isInstanceOf[WallCell]).
       get
     val playerPosition = game.player.position
-    val result = game.movePlayerTo(wallCellCoords)
+    val result = game.movePlayerTo(wallPosition)
     assertTrue(result.isLeft)
     assertEquals(
       playerPosition,
@@ -183,30 +183,31 @@ class GameTest:
 
   @Test
   def testOpenDoorWrongAnswer(): Unit =
-    val doorCellCoords = maze.doorCells.head.position
+    val doorPosition = maze.doorCells.head.position
     val floorCellAdjacentDoorCell =
-      adjacentPositions(doorCellCoords).
+      adjacentPositions(doorPosition).
         find(pos => game.getMaze.isWalkable(pos)).
         get
     game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
-    val result = game.openDoor(doorCellCoords, "Wrong answer")
+    val result = game.openDoor(doorPosition, "Wrong answer")
     assertTrue(result.isLeft)
-    val doorCell = game.getMaze.getCell(doorCellCoords).asInstanceOf[DoorCell]
+    val doorCell = game.getMaze.getCell(doorPosition).asInstanceOf[DoorCell]
     assertFalse(doorCell.isOpen, "Door should be closed if the answer provided is wrong")
 
   @Test
   def testOpenDoorCorrectAnswer(): Unit =
-    val doorCellCoords = maze.doorCells.head.position
+    val doorPosition = maze.doorCells.head.position
     val floorCellAdjacentDoorCell =
-      adjacentPositions(doorCellCoords).
+      adjacentPositions(doorPosition).
         find(pos => game.getMaze.isWalkable(pos)).
         get
     game.player = Player(floorCellAdjacentDoorCell, game.player.lives, game.player.score)
-    val doorCell = game.getMaze.getCell(doorCellCoords).asInstanceOf[DoorCell]
-    val puzzleSolution = doorCell.puzzle.solutions.head
-    val result = game.openDoor(doorCellCoords, puzzleSolution)
+    val doorCellBefore = game.getMaze.getCell(doorPosition).asInstanceOf[DoorCell]
+    val puzzleSolution = doorCellBefore.puzzle.solutions.head
+    val result = game.openDoor(doorPosition, puzzleSolution)
     assertTrue(result.isRight)
-    assertTrue(doorCell.isOpen, "Door should be open if the answer is correct")
+    val doorCellAfter = game.getMaze.getCell(doorPosition).asInstanceOf[DoorCell]
+    assertTrue(doorCellAfter.isOpen, "Door should be open if the answer is correct")
 
   @Test
   def testOpenNonDoorCell(): Unit =
