@@ -18,7 +18,7 @@ public class MenuView {
         panel.add(label);
 
         addButton("Easy", onDifficultySelected);
-        addButton("Medium", onDifficultySelected);
+        addButton("Normal", onDifficultySelected);
         addButton("Hard", onDifficultySelected);
 
         frame.setContentPane(panel);
