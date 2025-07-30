@@ -6,16 +6,50 @@
 package model.map
 
 import model.puzzle.{Puzzle, PuzzleRepository}
-import model.utils.{GameSettings, Position}
+import model.utils.Position
 import model.utils.Position.*
 import scala.reflect.ClassTag
 import scala.util.Random
 
 /**
+ * Helper to update and read the grid.
+ */
+object MazeUtils:
+
+  /**
+   * Provides a new grid with the cell in the specified position
+   * replaced by a new cell.
+   *
+   * @param grid the grid that shapes the maze.
+   * @param position the selected position.
+   * @param newCell the new cell.
+   * @return the updated grid.
+   */
+  def updateCell(grid: Vector[Vector[Cell]],
+                 position: Position,
+                 newCell: Cell): Vector[Vector[Cell]] =
+    grid.updated(position.row, grid(position.row).updated(position.col, newCell))
+
+  /**
+   * Provides the cell at the specified position.
+   *
+   * @param grid the grid that shapes the maze.
+   * @param position the selected position.
+   * @return the specified cell.
+   */
+  def getCell(grid: Vector[Vector[Cell]], position: Position): Cell =
+    grid(position.row)(position.col)
+
+/**
  * The generic cell used to generate the maze.
  */
 sealed trait Cell:
+
+  /**
+   * Provides cell's position.
+   */
   def position: Position
+
   override def toString: String
 
 /**
@@ -33,9 +67,10 @@ case class FloorCell(position: Position) extends Cell:
 /**
  * Represents a door cell.
  */
-case class DoorCell(position: Position, puzzle: Puzzle) extends Cell:
-  private var open: Boolean = false
-  private var blockedTurns: Int = 0
+case class DoorCell(position: Position,
+                    puzzle: Puzzle,
+                    open: Boolean = false,
+                    blockedTurns: Int = 0) extends Cell:
   
   /**
    * Checks if the door is open.
@@ -47,14 +82,14 @@ case class DoorCell(position: Position, puzzle: Puzzle) extends Cell:
   /**
    * Opens a locked door.
    */
-  def unlock(): Unit = open = true
+  def unlock(): DoorCell = copy(open = true)
 
   /**
    * Locks the door for a defined number of turns.
    *
    * @param turns number of turns the door is locked.
    */
-  def blockFor(turns: Int): Unit = blockedTurns = turns
+  def blockFor(turns: Int): DoorCell = copy(blockedTurns = turns)
 
   /**
    * Provides the remaining turns in which the door is locked.
@@ -64,7 +99,7 @@ case class DoorCell(position: Position, puzzle: Puzzle) extends Cell:
   def turnsLeft: Int = blockedTurns
 
   /**
-   * Checks if the door is blocked.
+   * Checks if the door is locked.
    *
    * @return true if the door is blocked, false otherwise.
    */
@@ -73,7 +108,9 @@ case class DoorCell(position: Position, puzzle: Puzzle) extends Cell:
   /**
    * Decreases the number of turns the door is locked.
    */
-  def decrementTurns(): Unit = if blockedTurns > 0 then blockedTurns -= 1
+  def decrementTurns(): DoorCell =
+    if blockedTurns > 0 then copy(blockedTurns = blockedTurns - 1)
+    else this
 
   override def toString: String = "->"
 
@@ -91,7 +128,9 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @param position the position of the cell.
    * @return the cell based on the specified coordinates.
    */
-  def getCell(position: Position): Cell = grid(position.row)(position.col)
+  // def getCell(position: Position): Cell = grid(position.row)(position.col)
+
+  def getCell(position: Position): Cell = MazeUtils.getCell(grid, position)
 
   /**
    * Provides the cells of the same type.
@@ -113,6 +152,13 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @return a list of wall cells.
    */
   def wallCells: List[WallCell] = cellsOfType[WallCell]
+
+  /**
+   * Provides all the floor cells of the maze.
+   *
+   * @return a list of floor cells.
+   */
+  def floorCells: List[FloorCell] = cellsOfType[FloorCell]
 
   /**
    * Provides all the cells of the maze.
@@ -150,7 +196,7 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    *
    * @return the position of the floor cell.
    */
-  def randomFloorCell(): Position =
+  /*def randomFloorCell(): Position =
     val rand = new Random()
     val floorCells =
       for
@@ -158,22 +204,31 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
         col <- 0 until size/2
         if getCell(Position(row, col)).isInstanceOf[FloorCell]
       yield Position(row, col)
-    floorCells(rand.nextInt(floorCells.length))
+    floorCells(rand.nextInt(floorCells.length))*/
 
-  /*
+  def randomFloorCell(): Position =
+    val allFloorCells = floorCells
+    if allFloorCells.isEmpty then throw new NoSuchElementException("No floor cell available")
+    allFloorCells(Random.nextInt(allFloorCells.length)).position
+
   /**
-   * Provides all border cells.
+   * Generates guardian entities randomly on the map.
+   *
+   * @param guardiansNumber the number of guardians to spawn.
+   * @param maze            context parameter to get the maze in the scope.
+   * @return a list of guardians' position.
    */
-  private def border(): Seq[Position] =
-    (0 until size).flatMap(x => Seq(Position(x, 0), Position(x, size - 1))).
-    concat((1 until size - 1).flatMap(y => Seq(Position(0, y), Position(size - 1, y))))
+  /*def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[Position] =
+    val guardiansPosition =
+      for
+        row <- 0 until maze.size
+        col <- 0 until maze.size
+        if maze.getCell(Position(row, col)).isInstanceOf[FloorCell]
+      yield Position(row, col)
+    Random.shuffle(guardiansPosition.toList).take(guardiansNumber)*/
 
-  def findDoorCellCoordsOnBorder(): Position =
-    border().find(pos => getCell(pos.x, pos.y).isInstanceOf[DoorCell]).get
-
-  def findWallCellCoordsOnBorder(): Position =
-    border().find(pos => getCell(pos.x, pos.y).isInstanceOf[WallCell]).get
-  */
+  def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[Position] =
+    Random.shuffle(maze.floorCells.map(_.position)).take(guardiansNumber)
 
 /**
  * The companion object of class Maze. It has the responsibility to create the maze
@@ -219,18 +274,47 @@ object Maze:
 
     new Maze(size, grid)
 
-  /**
-   * Generates guardian entities randomly on the map.
-   *
-   * @param guardiansNumber the number of guardians to spawn.
-   * @param maze context parameter to get the maze in the scope.
-   * @return a list of guardians' position.
-   */
-  def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[Position] =
-    val guardiansPosition =
-      for
-        row <- 0 until maze.size
-        col <- 0 until maze.size
-        if maze.getCell(Position(row, col)).isInstanceOf[FloorCell]
-      yield Position(row, col)
-    Random.shuffle(guardiansPosition.toList).take(guardiansNumber)
+  extension (maze: Maze)
+
+    /**
+     * Performs an action on the door.
+     *
+     * @param position the position of the door.
+     * @param f the function to call.
+     * @return a new instance of maze.
+     */
+    private def updateDoorAt(position: Position)(f: DoorCell => DoorCell): Maze =
+      maze.getCell(position) match
+        case door: DoorCell =>
+          val newCell = f(door)
+          Maze(maze.size, MazeUtils.updateCell(maze.grid, position, newCell))
+        case _ => maze
+
+    /**
+     * Decreases the turns of all locked doors.
+     *
+     * @return a new instance of maze.
+     */
+    def decreaseTurnsLockedDoors: Maze =
+      maze.doorCells.foldLeft(maze) { (maze, door) =>
+        maze.updateDoorAt(door.position)(_.decrementTurns())
+      }
+
+    /**
+     * Locks a door.
+     *
+     * @param position the position of the door.
+     * @param turns number of turns it is locked in.
+     * @return a new instance of maze.
+     */
+    def blockDoorAt(position: Position, turns: Int): Maze =
+      maze.updateDoorAt(position)(_.blockFor(turns))
+
+    /**
+     * Unlocks a door.
+     *
+     * @param position the position of the door.
+     * @return a new instance of maze.
+     */
+    def unlockDoorAt(position: Position): Maze =
+      maze.updateDoorAt(position)(_.unlock())
