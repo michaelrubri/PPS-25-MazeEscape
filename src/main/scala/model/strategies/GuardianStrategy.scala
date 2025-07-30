@@ -3,6 +3,8 @@ package model.strategies
 import alice.tuprolog.Term
 import alice.tuprolog.Struct
 import model.prolog.Scala2Prolog
+import model.utils.Position
+import model.utils.Position.*
 
 class GuardianStrategy(engine: Term => LazyList[Term]):
 
@@ -16,7 +18,7 @@ class GuardianStrategy(engine: Term => LazyList[Term]):
    * @param py second coordinate of player's position.
    * @return the new coordinates of guardian's position.
    */
-  def nextMove(gx: Int, gy: Int, px: Int, py: Int): (Int, Int) =
+  def nextMove(gx: Int, gy: Int, px: Int, py: Int): Position =
     val goal = Term.
       createTerm(s"next_move($gx, $gy, $px, $py, NX, NY)").
       asInstanceOf[Struct]
@@ -24,5 +26,5 @@ class GuardianStrategy(engine: Term => LazyList[Term]):
       case Some(solution) =>
         val nx = Scala2Prolog.extractTerm(solution, 4).toString.toInt
         val ny = Scala2Prolog.extractTerm(solution, 5).toString.toInt
-        (nx, ny)
-      case None => (gx, gy)
+        Position(nx, ny)
+      case None => Position(gx, gy)
