@@ -25,8 +25,28 @@ class Game(val settings: GameSettings):
   private var isFinished: Boolean = uninitialized
   private var isVictory: Boolean = uninitialized
   private var currentPuzzle: Option[Puzzle] = uninitialized
+  private var currentLevel: Int = uninitialized
+  private val maxLevels: Int = settings.levelsToWin
 
-  def startGame(): Unit =
+  private def resetLevel(level: Int, 
+                         preservingLives: Int, 
+                         preservingScore: Int): Unit =
+    maze = Maze.generate(settings.mazeSize)
+    val theory = model.prolog.MazePrologTheory(maze)
+    val engine = Scala2Prolog.mkPrologEngine(theory)
+    guardianStrategy = new GuardianStrategy(engine)
+    player = Player(maze.randomFloorCell(), preservingLives, preservingScore)
+    guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(row, col) => Guardian(Position(row, col)) }
+    doors = maze.doorCells
+    currentTurn = 0
+    currentPuzzle = None
+    currentLevel = level
+    isFinished = false
+    isVictory = false
+
+  def startGame(): Unit = resetLevel(1, settings.numLives, 0)
+
+  /*def startGame(): Unit =
     maze = Maze.generate(settings.mazeSize)
     player = Player(maze.randomFloorCell(), settings.numLives, 0)
     guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(row, col) => Guardian(Position(row, col)) }
@@ -37,7 +57,7 @@ class Game(val settings: GameSettings):
     currentTurn = 0
     isFinished = false
     isVictory = false
-    currentPuzzle = None
+    currentPuzzle = None*/
 
   implicit def givenMaze: Maze = maze
 
@@ -70,11 +90,25 @@ class Game(val settings: GameSettings):
       guardians = updatedGuardians
       currentTurn += 1
       doors.foreach(_.decrementTurns())
-      isFinished =
+
+      /*isFinished =
         player.lives <= 0 ||
         currentTurn >= settings.maxDuration ||
         maze.isExit(player.position)
-      isVictory = maze.isExit(player.position)
+      isVictory = maze.isExit(player.position)*/
+
+      if maze.isExit(player.position) then
+        if currentLevel < maxLevels then
+          resetLevel(currentLevel + 1, player.lives, player.score)
+          return
+        else
+          isFinished = true
+          isVictory = true
+          return
+
+      if player.lives <= 0 || currentTurn >= settings.maxDuration then
+        isFinished = true
+        isVictory = false
     }
 
   def endGame(): Boolean =
