@@ -58,6 +58,8 @@ object Position:
    * @return new type position.
    */
   def apply(row: Int, col: Int): Position = (row, col)
+  
+  def getDelta: List[Position] = delta
 
   /**
    * Provides the cells adjacent to a given position.
