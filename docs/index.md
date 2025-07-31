@@ -13,10 +13,20 @@ layout: home
 
 Campus di Cesena - Italia
 
+---
+
 ## Indice
-- [Introduzione](1-Introduction.md)
-- [Primo Incontro](sprint/0-FirstMeeting.md)
-- [Primo Sprint](sprint/1-FirstSprint.md)
+- [Introduzione](0-Introduzione.md)
+- [Processo di sviluppo](1-ProcessoDiSviluppo.md)
+- [Requisiti](2-Requisiti.md)
+- [Architettura](3-Architettura.md)
+- [Primo Incontro](sprint/0-PrimoIncontro.md)
+- [Primo Sprint](sprint/1-PrimoSprint.md)
+- [Secondo Sprint](sprint/2-SecondoSprint.md)
+- [Terzo Sprint](sprint/3-TerzoSprint.md)
+- [Quarto Sprint](sprint/4-QuartoSprint.md)
+
+---
 
 ## Autori
 - Michael Rubri - [michael.rubri@studio.unibo.it](mailto:michael.rubri@studio.unibo.it)
