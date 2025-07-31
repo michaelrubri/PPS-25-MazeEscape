@@ -8,39 +8,6 @@ package model.utils
 import model.entities.Direction
 import model.map.Maze
 
-/*
-/**
- * Represents the position of a generic entity.
- *
- * @param x the x-coordinate.
- * @param y the y-coordinate.
- */
-case class Position(x: Int, y: Int):
-
-  /**
-   * Generates a new position from a starting position.
-   *
-   * @param dx the x-coordinate.
-   * @param dy the y-coordinate.
-   * @return the updated position.
-   */
-  def move(dx: Int, dy: Int): Position = Position(dx + x, dy + y)
-
-/**
- * The companion object of position.
- */
-object Position:
-
-  /**
-   * Generates a new instance of position.
-   *
-   * @param x the x-coordinate.
-   * @param y the y-coordinate.
-   * @return new instance of position.
-   */
-  def create(x: Int, y: Int): Position = Position(x, y)
-*/
-
 /**
  * Represents the position of a generic entity.
  */
@@ -58,8 +25,8 @@ object Position:
    * @return new type position.
    */
   def apply(row: Int, col: Int): Position = (row, col)
-  
-  def getDelta: List[Position] = delta
+
+  def deltas: List[Position] = delta
 
   /**
    * Provides the cells adjacent to a given position.
