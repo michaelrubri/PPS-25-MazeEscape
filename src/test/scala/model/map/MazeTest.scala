@@ -13,10 +13,7 @@ import scala.compiletime.uninitialized
 class MazeTest:
 
   private val size: Int = 10
-  private var maze: Maze = uninitialized
-
-  @BeforeEach
-  def setup(): Unit = maze = Maze.generate(size)
+  private val maze: Maze = Maze.generate(size)
 
   @Test
   def testIsWalkable(): Unit =
