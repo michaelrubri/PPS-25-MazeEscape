@@ -98,7 +98,7 @@ class Game(val settings: GameSettings):
         maze.isExit(player.position)
       isVictory = maze.isExit(player.position)*/
 
-      if maze.isExit(player.position) then
+      if maze.isOnDoor(player.position) then
         if currentLevel < maxLevels then
           resetLevel(currentLevel + 1, player.lives, player.score)
           return
