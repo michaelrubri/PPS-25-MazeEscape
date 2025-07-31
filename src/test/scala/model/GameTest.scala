@@ -37,18 +37,24 @@ class GameTest:
     f.setAccessible(true)
     f.get(game).asInstanceOf[List[Guardian]]
 
-  @Test
+  @RepeatedTest(10)
   def testGuardianMovesToFreeCell(): Unit =
-    val original = getGuardians
-    assertFalse(original.isEmpty)
-    val guardian = original.head
-    val neighbors = adjacentPositions(guardian.position).filter(game.getMaze.isWalkable)
-    assertFalse(neighbors.isEmpty)
+    val guardians = getGuardians
+    assertFalse(guardians.isEmpty)
+    val guardian = guardians.head
+    val occupied = Set(game.player.position) concat guardians.map(_.position)
+    val neighbors =
+      adjacentPositions(guardian.position).
+      filter(pos => game.getMaze.isWalkable(pos) && !occupied(pos))
+    assumeTrue(neighbors.nonEmpty, "No cells available")
     val target = neighbors.head
     val stubStrat = new GuardianStrategy(null) {
       override def nextMove(gx: Int, gy: Int, px: Int, py: Int): Position = target
     }
     setStrategy(stubStrat)
+    val f = classOf[Game].getDeclaredField("guardians")
+    f.setAccessible(true)
+    f.set(game, List(guardian))
     game.updateGameState()
     val updated = getGuardians.head
     assertEquals(target, updated.position)
