@@ -5,31 +5,18 @@
 
 package model.map
 
+import model.utils.Position
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import scala.compiletime.uninitialized
 
 class MazeTest:
 
-  private val size = 10
+  private val size: Int = 10
   private var maze: Maze = uninitialized
 
   @BeforeEach
-  def setup(): Unit =
-    maze = Maze.generate(size)
-
-  /*@Test
-  def testGridBordersAreWallOrDoor(): Unit =
-    for
-      x <- 0 until size
-      y <- 0 until size
-    do
-      val cell = maze.getCell(x, y)
-      val isBorder = x == 0 || y == 0 || x == size - 1 || y == size - 1
-      if isBorder then
-        if (x + y) % 7 == 0 then assertTrue(cell.isInstanceOf[DoorCell], s"Expected DoorCell at ($x, $y)")
-        else assertTrue(cell.isInstanceOf[WallCell], s"Expected WallCell at ($x, $y)")
-      else assertTrue(cell.isInstanceOf[FloorCell], s"Expected FloorCell at ($x, $y)")*/
+  def setup(): Unit = maze = Maze.generate(size)
 
   @Test
   def testIsWalkable(): Unit =
@@ -37,45 +24,52 @@ class MazeTest:
       x <- 0 until size
       y <- 0 until size
     do
-      val position = (x, y)
-      val cell = maze.getCell(x, y)
+      val position = Position(x, y)
+      val cell = maze.getCell(position)
       cell match
-        case _: FloorCell   => assertTrue(maze.isWalkable(position), s"Expected walkable at $position")
-        case _: WallCell    => assertFalse(maze.isWalkable(position), s"Expected not walkable at $position")
+        case _: FloorCell   => assertTrue(maze.isWalkable(position), s"Expected walkable")
+        case _: WallCell    => assertFalse(maze.isWalkable(position), s"Expected not walkable")
         case door: DoorCell =>
-          assertFalse(door.isOpen, s"Door at $position should be initially closed")
-          assertFalse(maze.isWalkable(position), s"Expected not walkable when door is closed at $position")
-          door.unlock()
-          assertTrue(maze.isWalkable(position), s"Expected walkable when door is open at $position")
+          assertFalse(maze.isWalkable(position), s"Expected not walkable when door is closed")
+          val updatedMaze = maze.unlockDoorAt(door.position)
+          assertTrue(updatedMaze.isWalkable(position), s"Expected walkable when door is open")
 
   @Test
-  def testIsExit(): Unit =
-    val doorsPositionOpt = (for
-      x <- 0 until size
-      y <- 0 until size
-      cell = maze.getCell(x, y)
-      if cell.isInstanceOf[DoorCell]
-    yield (x, y, cell.asInstanceOf[DoorCell])).find(!_._3.isOpen)
-    assertTrue(doorsPositionOpt.isDefined, "Should have at least one closed DoorCell")
+  def testIsOnDoor(): Unit =
+    val doors = maze.doorCells
+    assertTrue(doors.nonEmpty, "Should have at least one door")
+    val doorsNumber = doors.size
+    assertEquals(doors.count(!_.isOpen), doorsNumber, "All doors should be initially closed")
+    val doorPos = doors.head.position
+    assertFalse(maze.isOnDoor(doorPos), "Door should not be an exit when closed")
+    val updatedMaze = maze.unlockDoorAt(doorPos)
+    assertTrue(updatedMaze.isOnDoor(doorPos), s"Door should be an exit when open")
+    val floorPosition = updatedMaze.floorCells.head.position
+    assertFalse(updatedMaze.isOnDoor(floorPosition), "Floor should never be an exit")
 
-    val (x, y, door) = doorsPositionOpt.get
-    val position = (x, y)
-    assertFalse(maze.isExit(position), s"Door at $position should not be an exit when closed")
-    door.unlock()
-    assertTrue(maze.isExit(position), s"Door at $position should be an exit when open")
-
-    val floorPosition = (1, 1)
-    assertTrue(maze.getCell(floorPosition._1, floorPosition._2).isInstanceOf[FloorCell])
-    assertFalse(maze.isExit(floorPosition), "FloorCell should never be an exit")
+  @Test
+  def testBlockDoorAndDecrementTurns(): Unit =
+    val doorPos = maze.doorCells.head.position
+    val updatedMaze1 = maze.blockDoorAt(doorPos, 3)
+    val door1 = updatedMaze1.doorCells.head
+    assertTrue(door1.isBlocked)
+    assertEquals(3, door1.turnsLeft)
+    val updatedMaze2 = updatedMaze1.decreaseTurnsLockedDoors
+    val updatedDoor1 = updatedMaze2.doorCells.head
+    assertEquals(2, updatedDoor1.turnsLeft)
 
   @Test
   def testSpawnGuardians(): Unit =
     given Maze = maze
-    val n = 2
-    val guardians = Maze.spawnGuardians(n)
-    assertEquals(n, guardians.size, "Should spawn correct number of guardians")
-    assertEquals(n, guardians.toSet.size, "Guardian positions should be unique")
-    for (x, y) <- guardians do
-      assertTrue(x > 0 && x < size - 1, s"x=$x should be inside the maze")
-      assertTrue(y > 0 && y < size - 1, s"y=$y should be inside the maze")
-      assertTrue(maze.getCell(x, y).isInstanceOf[FloorCell], s"Cell at ($x, $y) should be FloorCell")
+    val guardians = maze.spawnGuardians(2)
+    assertEquals(2, guardians.size, "Should spawn correct number of guardians")
+    assertEquals(2, guardians.toSet.size, "Guardian positions should be unique")
+    for position <- guardians do
+      assertTrue(
+        position.row >= 0 &&
+        position.row < size &&
+        position.col >= 0 &&
+        position.col < size,
+        "Guardians should be inside the maze"
+      )
+      assertTrue(maze.floorCells.map(_.position).contains(position), "Guardian should be spawned on a floor")

@@ -168,6 +168,33 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
   def cells: List[Cell] = grid.flatten.toList
 
   /**
+   * Checks if the cell in the specified position is a door.
+   *
+   * @param pos position of the cell.
+   * @return true if the cell is a door, false otherwise.
+   */
+  def isDoor(pos: Position): Boolean =
+    doorCells.map(_.position).contains(pos)
+
+  /**
+   * Checks if the cell in the specified position is a wall.
+   *
+   * @param pos position of the cell.
+   * @return true if the cell is a wall, false otherwise.
+   */
+  def isWall(pos: Position): Boolean =
+    wallCells.map(_.position).contains(pos)
+
+  /**
+   * Checks if the cell in the specified position is a floor.
+   *
+   * @param pos position of the cell.
+   * @return true if the cell is a floor, false otherwise.
+   */
+  def isFloor(pos: Position): Boolean =
+    floorCells.map(_.position).contains(pos)
+
+  /**
    * Determines whether the cell can be walked on.
    *
    * @param position the coordinates of the cell.
@@ -183,10 +210,10 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * Checks if the user has opened the door successfully and moved to that cell.
    * The door is considered an exit only if the door belongs to the last level of the maze.
    *
-   * @param position the coordinates of the cell.
+   * @param position the coordinates of the door.
    * @return true if the user has walked on an open door, false otherwise.
    */
-  def isExit(position: Position): Boolean =
+  def isOnDoor(position: Position): Boolean =
     getCell(position) match
       case door: DoorCell => door.isOpen
       case _              => false
