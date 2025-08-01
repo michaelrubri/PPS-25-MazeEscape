@@ -71,21 +71,47 @@ trait Player extends Entity:
    */
   def addScore(points: Int): Result[Player]
 
-  /** Ritorna l’inventario corrente */
+  /**
+   * Provides the current inventory.
+   */
   def inventory: Inventory
 
-  /** Restituisce Left(error) o Right(nuovoPlayer) */
+  /**
+   * Uses a specific item.
+   *
+   * @param item the item to use.
+   * @param slots given parameter of type Slots[T].
+   * @param usable given parameter of type Usable[T].
+   * @tparam T a subtype of Item.
+   * @return a new player instance if he can use the item,
+   *         an error message otherwise.
+   */
   def useItem[T <: Item](item: T)
                         (using slots: Slots[T])
                         (using usable: Usable[T]): Either[String, Player]
 
-  /** Registra uno status temporaneo (es. "invisible") per `duration` turni */
+  /**
+   * Records a temporary status for some turns.
+   *
+   * @param name the name of the status.
+   * @param duration the number of turns.
+   * @return a new instance of player.
+   */
   def addStatus(name: String, duration: Int): Player
 
-  /** Decrementa di uno ogni status e rimuove quelli a zero turni */
+  /**
+   * Decrements each status by one and removes those with zero turns.
+   *
+   * @return a new instance of player.
+   */
   def decreaseStatusEffects(): Player
 
-  /** Controlla se uno status è ancora attivo */
+  /**
+   * Checks if a status is still active.
+   *
+   * @param name the name of the status.
+   * @return true if the status is active, false otherwise.
+   */
   def hasStatus(name: String): Boolean
 
 /**
