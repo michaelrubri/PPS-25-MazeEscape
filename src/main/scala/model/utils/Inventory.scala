@@ -1,18 +1,35 @@
+/*
+ * Copyright (c) 2025 "Maze Escape"
+ * Licensed under the MIT License
+ */
+
 package model.utils
 
-import model.entities.Player
 import scala.util.NotGiven
 
 /**
- * Un oggetto che può occupare slot in un inventario
- * e calcolare quanti ne occupa per una certa quantità.
+ * Represents the slots of an inventory.
  */
 trait Slots[T <: Item]:
-  
-  /** Numero di slot occupati da `quantity` elementi di `item`. */
+
+  /**
+   * Calculates the number of slots occupied by an item.
+   *
+   * @param item the specific item.
+   * @param quantity the quantity of the item.
+   * @return the number of slots occupied by the item.
+   */
   def slotsOccupied(item: T, quantity: Int): Int
 
-  /** Incremento di slot richiesti passando da existingQty a existingQty + addQty. */
+  /**
+   * Calculate the number of slots needed for the item
+   * considering the quantity to be added.
+   *
+   * @param item the specific item.
+   * @param existingQty existing quantity of item in the inventory.
+   * @param addQty quantity to add.
+   * @return the updated number of slots for the item.
+   */
   def neededSlots(item: T, existingQty: Int, addQty: Int): Int =
     val before = slotsOccupied(item, existingQty)
     val after = slotsOccupied(item, existingQty + addQty)
@@ -36,20 +53,28 @@ object Slots:
     given [T <: Item](using NotGiven[Stackable[T]]): Slots[T] with
       override def slotsOccupied(item: T, quantity: Int): Int = quantity
 
-/** Inventario immutabile con capacità a numero di slot. */
+/**
+ * Represents the inventory as a collection of items.
+ *
+ * @param capacity maximum number of slots.
+ * @param bag represents for each item the quantity.
+ * @param usedSlots slots currently in use.
+ */
 case class Inventory private (capacity: Int,
                               bag: Map[String, (Item, Int)],
                               usedSlots: Int
                              ):
 
-  /** Costruisce un inventario vuoto con capacità predefinita. */
-  // def this(capacity: Int = 10) = this(capacity, Map.empty, 0)
-
   /**
-   * Aggiunge `quantity` unità di `item`.
+   * Adds a certain quantity of an item to the inventory.
    *
-   * @return Right(nuova Inventory) se c'è spazio e i vincoli di stack vengono rispettati,
-   *         Left(messaggio di errore) altrimenti.
+   * @param item the item to add.
+   * @param quantity the quantity of the item.
+   * @param slots given parameter of type Slots[T].
+   * @param stackable given parameter of type Usable[T].
+   * @tparam T a subtype of Item.
+   * @return a new inventory instance if the item is successfully added,
+   *         an error message otherwise.
    */
   def add[T <: Item](item: T, quantity: Int = 1)
                     (using slots: Slots[T], stackable: Stackable[T]): Either[String, Inventory] =
@@ -65,12 +90,16 @@ case class Inventory private (capacity: Int,
         val newQty = existingQty + quantity
         val newBag = bag.updated(id, (item, newQty))
         Right(copy(bag = newBag, usedSlots = usedSlots + newSlots))
-  
+
   /**
-   * Rimuove `quantity` unità di `item`.
+   * Removes a certain quantity of an item to the inventory.
    *
-   * @return Right(nuova Inventory) se la rimozione è avvenuta,
-   *         Left(messaggio di errore) altrimenti.
+   * @param item the item to remove.
+   * @param quantity the quantity of the item.
+   * @param slots given parameter of type Slots[T].
+   * @tparam T a subtype of Item.
+   * @return a new inventory instance if the item is successfully removed,
+   *         an error message otherwise.
    */
   def remove[T <: Item](item: T, quantity: Int = 1)
                        (using slots: Slots[T]): Either[String, Inventory] =
@@ -87,16 +116,19 @@ case class Inventory private (capacity: Int,
           if newQty > 0 then bag.updated(id, (item, newQty))
           else bag - id
         Right(copy(bag = newBag, usedSlots = usedSlots + slotsToDelete))
-  
+
   /**
-   * Controlla se ci sono almeno `quantity` unità di `item`.
+   * Checks that there is at least a certain quantity of an item in
+   * the inventory.
    *
-   * @return true se disponibili, false altrimenti.
+   * @param item the specific item.
+   * @param quantity the quantity of the item.
+   * @return true if there is at least that specific quantity
+   *         of the item in inventory, false otherwise.
    */
   def has(item: Item, quantity: Int = 1): Boolean =
     bag.get(item.id).exists(_._2 >= quantity)
 
-  /** Stringa testuale dell'inventario. */
   override def toString: String =
     if bag.isEmpty then "Empty inventory"
     else
@@ -108,6 +140,5 @@ case class Inventory private (capacity: Int,
         mkString("\n")
 
 object Inventory:
-  /** Factory per un inventario vuoto di capacità specificata. */
   def apply(capacity: Int): Inventory =
     new Inventory(capacity, Map.empty, 0)
