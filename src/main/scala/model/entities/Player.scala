@@ -5,6 +5,7 @@
 
 package model.entities
 
+import model.utils.{Inventory, Item, Slots, Usable}
 import model.utils.Position.*
 
 /**
@@ -70,6 +71,23 @@ trait Player extends Entity:
    */
   def addScore(points: Int): Result[Player]
 
+  /** Ritorna l’inventario corrente */
+  def inventory: Inventory
+
+  /** Restituisce Left(error) o Right(nuovoPlayer) */
+  def useItem[T <: Item](item: T)
+                        (using slots: Slots[T])
+                        (using usable: Usable[T]): Either[String, Player]
+
+  /** Registra uno status temporaneo (es. "invisible") per `duration` turni */
+  def addStatus(name: String, duration: Int): Player
+
+  /** Decrementa di uno ogni status e rimuove quelli a zero turni */
+  def decreaseStatusEffects(): Player
+
+  /** Controlla se uno status è ancora attivo */
+  def hasStatus(name: String): Boolean
+
 /**
  * The companion object of player.
  */
@@ -84,12 +102,20 @@ object Player:
    * @return new instance of player.
    */
   def apply(initialPosition: Position, initialLives: Int, initialScore: Int): Player =
-    PlayerImpl(initialPosition, initialLives, initialScore)
+    PlayerImpl(
+      initialPosition,
+      initialLives,
+      initialScore,
+      inventory = Inventory(capacity = 5),
+      statusEffects = Map.empty)
 
 private[entities] case class PlayerImpl(position: Position,
                                         lives: Int,
-                                        score: Int) extends Player:
-  override def move(direction: Direction): Player = copy(position = position.move(direction.x, direction.y))
+                                        score: Int,
+                                        inventory: Inventory,
+                                        statusEffects: Map[String, Int]) extends Player:
+  override def move(direction: Direction): Player =
+    copy(position = position.move(direction.x, direction.y))
   override def loseLife(): Result[Player] =
     if lives <= 0 then Left(PlayerError.NoLivesLeft)
     else Right(copy(lives = lives - 1))
@@ -99,3 +125,20 @@ private[entities] case class PlayerImpl(position: Position,
       copy(score = 0)
       Left(PlayerError.NegativeScore(points))
     else Right(copy(score = newScore))
+  override def useItem[T <: Item](item: T)
+                                 (using slots: Slots[T])
+                                 (using usable: Usable[T]): Either[String, Player] =
+    if !inventory.has(item) then
+      Left(s"Item ${item.name} not available")
+    else
+      inventory.remove(item) match
+        case Left(error) => Left(error)
+        case Right(newInv) =>
+          val updatedPlayer = usable.use(item, this)
+          Right(updatedPlayer.asInstanceOf[PlayerImpl].copy(inventory = newInv))
+  override def addStatus(name: String, duration: Int): Player =
+    copy(statusEffects = statusEffects + (name -> duration))
+  override def decreaseStatusEffects(): Player =
+    val updatedStatus = statusEffects.view.mapValues(_ - 1).toMap
+    copy(statusEffects = updatedStatus.filter(_._2 > 0))
+  override def hasStatus(name: String): Boolean = statusEffects.contains(name)  
