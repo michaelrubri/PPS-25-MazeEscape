@@ -1,15 +1,29 @@
+/*
+ * Copyright (c) 2025 "Maze Escape"
+ * Licensed under the MIT License
+ */
+
 package model.utils
 
 import model.entities.Player
 
+/**
+ * Represents a standard item.
+ */
 sealed trait Item:
   def id: String
   def name: String
   def description: String
 
+/**
+ * Represents a stackable item.
+ */
 trait Stackable[T]:
   def maxStack(item: T): Int
 
+/**
+ * Represents a usable item.
+ */
 trait Usable[T]:
   def use(item: T, player: Player): Player
 
