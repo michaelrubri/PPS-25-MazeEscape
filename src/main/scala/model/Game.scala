@@ -204,3 +204,9 @@ class Game(val settings: GameSettings):
 
   def guardiansAtPlayer(): List[Guardian] =
     guardians.filter(guardian => player.position.isAdjacent(guardian.position))
+
+  def setPlayerPosition(position: Position): Unit =
+    player = Player(position, player.lives, player.score)
+
+  def setPlayerLives(lives: Int): Unit =
+    player = Player(player.position, lives, player.score)
