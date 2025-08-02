@@ -1,17 +1,17 @@
+/*
+ * Copyright (c) 2025 "Maze Escape"
+ * Licensed under the MIT License
+ */
+
 package controller
 
 import model.Game
-import model.entities.Player
+import model.map.Maze
 import model.utils.*
-import model.utils.Position.*
-import model.map.{DoorCell, FloorCell, Maze}
-import model.entities.Guardian
-import view.*
-import view.utils.*
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
-
+import view.*
 import scala.compiletime.uninitialized
 
 class ControllerTest:
@@ -29,8 +29,7 @@ class ControllerTest:
     view = new GameView(game)
     controller = Controller(view, game)
     maze = game.getMaze
-
-
+  
   @Test
   def testAttemptMoveToValidFloor(): Unit =
     val current = game.player.position
@@ -72,8 +71,7 @@ class ControllerTest:
     game.maze = game.getMaze.unlockDoorAt(door.position)
     controller.onAction(UserAction.ClickCell(door.position))
     assertEquals(door.position, game.player.position)
-
-
+  
   @Test
   def testRestartAction(): Unit =
     game.setPlayerLives(1)
