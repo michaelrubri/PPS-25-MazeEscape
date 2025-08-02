@@ -18,14 +18,14 @@ sealed trait Item:
 /**
  * Represents a stackable item.
  */
-trait Stackable[T]:
-  def maxStack(item: T): Int
+trait Stackable[I]:
+  def maxStack(item: I): Int
 
 /**
  * Represents a usable item.
  */
-trait Usable[T]:
-  def use(item: T, player: Player): Player
+trait Usable[I]:
+  def use(item: I, player: Player): Player
 
 case object SealOfTheChallenge extends Item:
   val id = "special-key"
