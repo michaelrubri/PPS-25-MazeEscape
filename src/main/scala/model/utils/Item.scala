@@ -26,6 +26,9 @@ trait Stackable[I]:
  */
 trait Usable[I]:
   def use(item: I, player: Player): Player
+  
+object Usable:
+  export InvisibilityPotion.given 
 
 case object SealOfTheChallenge extends Item:
   val id = "special-key"
@@ -37,9 +40,10 @@ case class InvisibilityPotion(turns: Int = 3) extends Item:
   val name = "Invisibility potion"
   val description = s"Makes invisible for $turns turns"
   
-given Stackable[InvisibilityPotion] with
-  override def maxStack(item: InvisibilityPotion): Int = 5
+object InvisibilityPotion:
+  given Stackable[InvisibilityPotion] with
+    override def maxStack(item: InvisibilityPotion): Int = 5
   
-given Usable[InvisibilityPotion] with
-  override def use(item: InvisibilityPotion, player: Player): Player =
-    player.addStatus("invisible", item.turns)
+  given Usable[InvisibilityPotion] with
+    override def use(item: InvisibilityPotion, player: Player): Player =
+      player.addStatus("invisible", item.turns)

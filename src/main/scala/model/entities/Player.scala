@@ -77,18 +77,23 @@ trait Player extends Entity:
   def inventory: Inventory
 
   /**
+   * Provides a copy of the player with the inventory replaced.
+   */
+  def withInventory(inv: Inventory): Player
+
+  /**
    * Uses a specific item.
    *
    * @param item the item to use.
-   * @param slots given parameter of type Slots[T].
-   * @param usable given parameter of type Usable[T].
-   * @tparam T a subtype of Item.
+   * @param slots given parameter of type Slots[I].
+   * @param usable given parameter of type Usable[I].
+   * @tparam I a subtype of Item.
    * @return a new player instance if he can use the item,
    *         an error message otherwise.
    */
-  def useItem[T <: Item](item: T)
-                        (using slots: Slots[T])
-                        (using usable: Usable[T]): Either[String, Player]
+  def useItem[I <: Item](item: I)
+                        (using slots: Slots[I])
+                        (using usable: Usable[I]): Either[String, Player]
 
   /**
    * Records a temporary status for some turns.
@@ -114,6 +119,26 @@ trait Player extends Entity:
    */
   def hasStatus(name: String): Boolean
 
+  /**
+   * Takes an item.
+   *
+   * @param item the item to pick up.
+   * @param quantity the quantity of the item.
+   * @param slots given parameter of type Slots[I].
+   * @tparam I a subtype of Item.
+   * @return a new instance of player if he can pick up the item,
+   *         an error message otherwise.
+   */
+  def pickUp[I <: Item](item: I, quantity: Int = 1)
+                       (using slots: Slots[I]): Either[String, Player]
+
+  /**
+   * Checks if the inventory is full.
+   *
+   * @return true if the inventory is full, false otherwise.
+   */
+  def isInventoryFull: Boolean
+
 /**
  * The companion object of player.
  */
@@ -132,7 +157,7 @@ object Player:
       initialPosition,
       initialLives,
       initialScore,
-      inventory = Inventory(capacity = 5),
+      inventory = Inventory(capacity = 3),
       statusEffects = Map.empty)
 
 private[entities] case class PlayerImpl(position: Position,
@@ -148,23 +173,29 @@ private[entities] case class PlayerImpl(position: Position,
   override def addScore(points: Int): Result[Player] =
     val newScore = score + points
     if newScore < 0 then
-      copy(score = 0)
-      Left(PlayerError.NegativeScore(points))
+      Right(copy(score = 0))
     else Right(copy(score = newScore))
-  override def useItem[T <: Item](item: T)
-                                 (using slots: Slots[T])
-                                 (using usable: Usable[T]): Either[String, Player] =
+  override def withInventory(inv: Inventory): Player = copy(inventory = inv)
+  override def useItem[I <: Item](item: I)
+                                 (using slots: Slots[I])
+                                 (using usable: Usable[I]): Either[String, Player] =
     if !inventory.has(item) then
       Left(s"Item ${item.name} not available")
     else
       inventory.remove(item) match
-        case Left(error) => Left(error)
+        case Left(error) => Left(error.toString)
         case Right(newInv) =>
           val updatedPlayer = usable.use(item, this)
-          Right(updatedPlayer.asInstanceOf[PlayerImpl].copy(inventory = newInv))
+          Right(updatedPlayer.withInventory(newInv))
   override def addStatus(name: String, duration: Int): Player =
     copy(statusEffects = statusEffects + (name -> duration))
   override def decreaseStatusEffects(): Player =
     val updatedStatus = statusEffects.view.mapValues(_ - 1).toMap
     copy(statusEffects = updatedStatus.filter(_._2 > 0))
-  override def hasStatus(name: String): Boolean = statusEffects.contains(name)  
+  override def hasStatus(name: String): Boolean = statusEffects.contains(name)
+  override def pickUp[I <: Item](item: I, quantity: Int)
+                                (using slots: Slots[I]): Either[String, Player] =
+    inventory.add(item, quantity) match
+      case Left(error) => Left(error.toString)
+      case Right(newInv) => Right(copy(inventory = newInv))
+  override def isInventoryFull: Boolean = inventory.isFull
