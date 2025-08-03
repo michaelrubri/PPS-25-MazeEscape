@@ -129,7 +129,6 @@ class InventoryTest:
       .add(SealOfTheChallenge)
       .flatMap(_.add(InvisibilityPotion(), 2))
       .getOrElse(fail("Setup failure"))
-
     assertTrue(inv.has(SealOfTheChallenge))
     assertFalse(inv.has(SealOfTheChallenge, 2))
     assertTrue(inv.has(InvisibilityPotion(), 2))
@@ -139,12 +138,10 @@ class InventoryTest:
   @Test
   def testAddStackableAndNonStackableWithinCapacity(): Unit =
     val inv = Inventory(capacity = 5)
-
     val result = for
       invWithPotions <- inv.add(InvisibilityPotion(), 9)
       invWithKeysAndPotions <- invWithPotions.add(SealOfTheChallenge, 2)
     yield invWithKeysAndPotions
-
     result match
       case Right(updatedInv) =>
         assertTrue(updatedInv.has(InvisibilityPotion(), 9))

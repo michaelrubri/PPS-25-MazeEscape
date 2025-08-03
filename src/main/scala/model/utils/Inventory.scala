@@ -68,7 +68,7 @@ object InventoryError:
  * Represents the inventory as a collection of items.
  *
  * @param capacity maximum number of slots.
- * @param bag represents the quantity for each item.
+ * @param bag collection representing the quantity for each item.
  */
 case class Inventory(capacity: Int,
                      bag: Map[Item, Int]
@@ -147,7 +147,12 @@ case class Inventory(capacity: Int,
    */
   def has[I <: Item](item: I, quantity: Int = 1): Boolean =
     bag.getOrElse(item, 0) >= quantity
-    
+
+  /**
+   * Checks if the inventory is full.
+   * 
+    * @return true if every slot is occupied, false otherwise.
+   */
   def isFull: Boolean = slotsUsed == capacity
 
   override def toString: String =
