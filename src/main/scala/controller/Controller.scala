@@ -14,8 +14,7 @@ import view.GameView
 import view.utils.*
 
 class Controller(view: GameView, game: Game) extends UserActionHandler:
-
-  // game.startGame()
+  
   view.updateView()
   initEventBus()
   
