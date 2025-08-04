@@ -46,7 +46,7 @@ Deadline sprint: 04/08/2025
 ## Revisione dello sprint - 04/08/2025
 
 Il team ha raggiunto con successo tutti gli obiettivi prefissati. Il sistema risulta attualmente giocabile e con le
-modifiche sostanziali apportate in questo sprint si procederà con il rilascio della versione 1.0.1.
+modifiche sostanziali apportate in questo sprint si procederà con il rilascio della versione 1.1.0.
 
 **N.B.** Attualmente è stato implementato solo il modulo **Inventory**, con tutti i metodi necessari per la gestione
 degli oggetti al suo interno, e il modulo **Item**, che modella il singolo oggetto. Eventuali evoluzioni future
