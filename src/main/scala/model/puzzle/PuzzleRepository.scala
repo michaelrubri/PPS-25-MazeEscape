@@ -56,7 +56,11 @@ object PuzzleRepository:
       "Yet golden treasure inside is hid.",
       List("Egg"))
   )
-  
+
+  /**
+   * Necessary to maximize the number of puzzles used by the user
+   * by temporarily making a previously used puzzle unavailable.
+   */
   private var availablePuzzles = allPuzzles
 
   /**
