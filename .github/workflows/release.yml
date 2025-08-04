@@ -52,9 +52,9 @@ jobs:
         id: find_jar
         run: |
           # Cerca il JAR assembly nel percorso tipico di sbt
-          JAR_PATH=$(find target -name "*assembly*.jar" -o -name "RiseOfTheMachine.jar" | head -n 1)
+          JAR_PATH=$(find target -name "*assembly*.jar" -o -name "*mazeescape*.jar" | head -n 1)
           if [ -z "$JAR_PATH" ]; then
-            echo "No JAR file found with assembly or RiseOfTheMachine name"
+            echo "No JAR file found with assembly or MazeEscape name"
             # Fallback: cerca qualsiasi JAR nella directory target
             JAR_PATH=$(find target -name "*.jar" | head -n 1)
           fi
@@ -87,6 +87,6 @@ jobs:
             Automatic release created from tag ${{ github.ref_name }}
             
             ### Files included:
-            - RiseOfTheMachine.jar
+            - MazeEscaped.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
