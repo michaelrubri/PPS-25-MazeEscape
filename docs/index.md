@@ -25,6 +25,11 @@ Campus di Cesena - Italia
 - [Secondo Sprint](sprint/2-SecondoSprint.md)
 - [Terzo Sprint](sprint/3-TerzoSprint.md)
 - [Quarto Sprint](sprint/4-QuartoSprint.md)
+- [DesignDiDetaglioCandelaEsparrica](DesignDiDetaglioCandelaEsparrica.md)
+- [DesignDiDetaglio](DesignDiDettaglio.md)
+- [ImplementazioneCandelaEsparrica](ImplementazioneCandelaEsparrica.md)
+- [ImplementazioneComune](ImplementazioneComune.md)
+- [ImplementazioneMichaelRubri](ImplementazioneMichaelRubri.md)
 
 ---
 
