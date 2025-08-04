@@ -15,6 +15,9 @@ object Position:
 
   opaque type Position = (Int, Int)
 
+  /**
+   * Provides all adjacent movements.
+   */
   private val delta = List(Position(1, 0), Position(-1, 0), Position(0, 1), Position(0, -1))
 
   /**
