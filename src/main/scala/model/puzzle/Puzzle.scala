@@ -11,7 +11,7 @@ package model.puzzle
 sealed trait Puzzle:
 
   /**
-   * Puzzle's identification number
+   * Puzzle's identification number.
    */
   def id: Int
 
@@ -33,7 +33,7 @@ sealed trait Puzzle:
    * @param answer solution provided by the user.
    * @return true if the answer is correct, false otherwise.
    */
-  def checkAnswer(answer: String): Boolean = solutions.contains(answer)
+  def checkAnswer(answer: String): Boolean = solutions.map(_.toLowerCase) contains answer.toLowerCase
 
 /**
  * The following case classes are different puzzle types.
@@ -46,10 +46,9 @@ sealed trait Puzzle:
  * @param question query posed to the user.
  * @param solutions list of the possible correct answers to the question.
  */
-case class LogicPuzzle(
-                        id: Int,
-                        question: String,
-                        solutions: List[String]
+case class LogicPuzzle(id: Int,
+                       question: String,
+                       solutions: List[String]
                       ) extends Puzzle
 
 /**
@@ -59,8 +58,7 @@ case class LogicPuzzle(
  * @param question query posed to the user.
  * @param solutions list of the possible correct answers to the question.
  */
-case class RiddlePuzzle(
-                         id: Int,
-                         question: String,
-                         solutions: List[String]
+case class RiddlePuzzle(id: Int,
+                        question: String,
+                        solutions: List[String]
                        ) extends Puzzle

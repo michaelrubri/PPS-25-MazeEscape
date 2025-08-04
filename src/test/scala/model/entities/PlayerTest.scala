@@ -5,26 +5,24 @@
 
 package model.entities
 
-import model.utils.Position
+import model.utils._
+import model.utils.Usable.given
+import model.utils.Slots.given
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import scala.compiletime.uninitialized
 
 class PlayerTest:
-  
-  var player: Player = uninitialized
-  
-  @BeforeEach
-  def init(): Unit = player = Player(Position(0, 0), 1, 0)
 
   @Test
   def testInitialValues(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
     assertEquals(Position(0, 0), player.position)
     assertEquals(1, player.lives)
     assertEquals(0, player.score)
 
   @Test
   def testMove(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
     val up = player.move(Direction.Up)
     assertEquals(Position(0, 1), up.position, "Player should move to the top")
     val down = player.move(Direction.Down)
@@ -36,6 +34,7 @@ class PlayerTest:
 
   @Test
   def testValidLoseLife(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
     val result = player.loseLife()
     assertTrue(result.isRight)
     val updatedPlayer = result.getOrElse(fail("Expected Right"))
@@ -43,6 +42,7 @@ class PlayerTest:
 
   @Test
   def testInvalidLoseLife(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
     val updatedPlayer = player.loseLife().getOrElse(fail("Expected Right"))
     assertEquals(0, updatedPlayer.lives)
     val result = updatedPlayer.loseLife()
@@ -53,6 +53,7 @@ class PlayerTest:
 
   @Test
   def testValidAddScore(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
     val result = player.addScore(50)
     assertTrue(result.isRight)
     val updatedPlayer = result.getOrElse(fail("Expected Right"))
@@ -60,9 +61,62 @@ class PlayerTest:
 
   @Test
   def testInvalidAddScore(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
     val result = player.addScore(-10)
-    assertTrue(result.isLeft)
-    result match
-      case Left(PlayerError.NegativeScore(invalid)) =>
-        assertEquals(-10, invalid)
-      case other => fail(s"Errore inatteso: $other")
+    assertTrue(result.isRight)
+    val updatedPlayer = result.getOrElse(fail("Expected Right"))
+    assertEquals(0, updatedPlayer.score, "Player score should be reset to 0 when going negative")
+
+  @Test
+  def testStatusEffects(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
+    assertFalse(player.hasStatus("invisible"), "No status on new player")
+    val withStatus = player.addStatus("invisible", 2)
+    assertTrue(withStatus.hasStatus("invisible"), "Status should be active")
+    val afterOne = withStatus.decreaseStatusEffects()
+    val afterTwo = afterOne.decreaseStatusEffects()
+    assertFalse(afterTwo.hasStatus("invisible"), "Status should be removed after 2 turns")
+
+  @Test
+  def testPickUpMakesInventoryFull(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
+    assertFalse(player.isInventoryFull, "Empty inventory should not be full")
+    val item = SealOfTheChallenge
+    player.pickUp(item, 3) match
+      case Right(newPlayer) =>
+        assertTrue(newPlayer.isInventoryFull, "Inventory with 3 slots should be full after picking 3 non stackable items")
+      case Left(err) => fail(s"Expected to pick up items successfully but got error: $err")
+
+  @Test
+  def testPickUpExceedsCapacity(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
+    val item = InvisibilityPotion()
+    player.pickUp(item, 16) match
+      case Left(PlayerError.InventoryFull(name, qty)) =>
+        assertEquals(item.name, name, "Error must report correct item")
+        assertEquals(16, qty, "Error must report requested quantity")
+      case Left(other) => fail(s"Expected InventoryFull error but got: $other")
+      case Right(_) => fail("Expected pickUp to fail due to exceeding capacity")
+
+  @Test
+  def testUseItemNotAvailable(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
+    val item = InvisibilityPotion()
+    player.useItem(item) match
+      case Left(PlayerError.ItemNotFound(name)) =>
+        assertEquals(item.name, name, "Error must report missing item")
+      case Left(other) =>
+        fail(s"Expected ItemNotFound error but got: $other")
+      case Right(_) =>
+        fail("Expected useItem to fail when item is missing")
+
+  @Test
+  def testSuccessUseItemRemovesFromInventory(): Unit =
+    val player = Player(Position(0, 0), 1, 0)
+    val item = InvisibilityPotion()
+    val withItem = player.pickUp(item).getOrElse(fail("pickUp failed"))
+    withItem.useItem(item) match
+      case Right(playerAfterUse: Player) =>
+        assertFalse(playerAfterUse.inventory.has(item), "Item should be removed from inventory after use")
+      case Left(err) =>
+        fail(s"Expected useItem to succeed but got error: $err")

@@ -67,18 +67,18 @@ class GameTest:
     val common =
       (adjacentPositions(guardian0.position).toSet intersect adjacentPositions(guardian1.position).toSet)
       .filter(game.getMaze.isWalkable)
-    assumeTrue(common.nonEmpty, "Test skipped, no guardian nearby")
+    assumeTrue(common.nonEmpty, "Test skipped: no guardian nearby")
     val target = common.head
     val stubStrat = new GuardianStrategy(null) {
       override def nextMove(gx: Int, gy: Int, px: Int, py: Int): Position = target
     }
     setStrategy(stubStrat)
     game.updateGameState()
-    val updated = getGuardians
-    assertEquals(target, updated.head.position)
+    val updatedGuardians = getGuardians
+    assertEquals(target, updatedGuardians.head.position)
     assertEquals(
       guardian1.position,
-      updated(1).position,
+      updatedGuardians(1).position,
       "The second guardian cannot move on an occupied cell"
     )
 
@@ -226,7 +226,7 @@ class GameTest:
     game.player = Player(floorCellAdjacentWallCell, game.player.lives, game.player.score)
     val result = game.openDoor(wallCellCoords, "Answer")
     assertTrue(result.isLeft)
-    assertEquals("(Game) This is not a door", result.left.get)
+    assertEquals("This is not a door", result.left.get)
 
   @Test
   def testFightLogicNoActivePuzzle(): Unit =
@@ -236,7 +236,7 @@ class GameTest:
     val initialGuardiansNumber = game.guardians.size
     val result = game.fightLogic(guardian, "any answer")
     assertTrue(result.isLeft)
-    assertEquals("(Game) No active puzzle", result.left.getOrElse(""))
+    assertEquals("No active puzzle", result.left.getOrElse(""))
     assertEquals(initialLives, game.player.lives, "Lives should not change")
     assertEquals(initialScore, game.player.score, "Score should not change")
     assertEquals(initialGuardiansNumber, game.guardians.size, "No guardian should be removed")
@@ -250,7 +250,7 @@ class GameTest:
     val correctAnswer = puzzle.solutions.head
     val result = game.fightLogic(guardian, correctAnswer)
     assertTrue(result.isRight)
-    assertEquals("(Game) Guardian defeated!", result.getOrElse(""))
+    assertEquals("Guardian defeated!", result.getOrElse(""))
     assertEquals(initialScore + 50, game.player.score, "In case of success score should be increased")
     assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
     assertFalse(game.guardians.contains(guardian), "The guardian should be removed from the list")
@@ -264,7 +264,7 @@ class GameTest:
     val wrongAnswer = "wrong answer"
     val result = game.fightLogic(guardian, wrongAnswer)
     assertTrue(result.isLeft)
-    assertEquals("(Game) Wrong answer, you lost a life", result.left.getOrElse(""))
+    assertEquals("Wrong answer, you lost a life", result.left.getOrElse(""))
     assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
     assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
     assertFalse(game.guardians.contains(guardian), "The guardian should be removed")
@@ -276,13 +276,13 @@ class GameTest:
     val guardian = game.guardians.head
     val result = game.fightLuck(guardian)
     result match
-      case Right("(Game) Guardian defeated!") =>
+      case Right("Guardian defeated!") =>
         assertEquals(initialScore + 20, game.player.score, "In case of success score should be increased")
         assertEquals(initialLives, game.player.lives, "In case of success lives should not be decreased")
-      case Right("(Game) You were unlucky, you lost the fight") =>
+      case Right("You were unlucky, you lost the fight") =>
         assertEquals(initialScore, game.player.score, "In case of failure score should not be increased")
         assertEquals(initialLives - 1, game.player.lives, "In case of failure lives should be decreased")
       case Right(other) => fail(s"Unexpected message: $other")
-      case Left(msg) if msg.startsWith("(Game) Score update failed:") => assertEquals(0, game.player.score)
-      case Left(msg) if msg.startsWith("(Game) Lose life error:") => assertEquals(0, game.player.lives)
+      case Left(msg) if msg.startsWith("Score update failed:") => assertEquals(0, game.player.score)
+      case Left(msg) if msg.startsWith("Lose life error:") => assertEquals(0, game.player.lives)
       case Left(other) => fail(s"Unexpected message: $other")

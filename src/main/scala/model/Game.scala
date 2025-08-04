@@ -28,6 +28,9 @@ class Game(val settings: GameSettings):
   private var currentLevel: Int = uninitialized
   private val maxLevels: Int = settings.levelsToWin
 
+  /**
+   * Resets the class' variable.
+   */
   private def resetLevel(level: Int, 
                          preservingLives: Int, 
                          preservingScore: Int): Unit =
@@ -44,25 +47,21 @@ class Game(val settings: GameSettings):
     isFinished = false
     isVictory = false
 
+  /**
+   * Used to start the game.
+   */
   def startGame(): Unit = resetLevel(1, settings.numLives, 0)
-
-  /*def startGame(): Unit =
-    maze = Maze.generate(settings.mazeSize)
-    player = Player(maze.randomFloorCell(), settings.numLives, 0)
-    guardians = Maze.spawnGuardians(settings.numGuardians).map { case Position(row, col) => Guardian(Position(row, col)) }
-    val theory = model.prolog.MazePrologTheory(maze)
-    val engine = Scala2Prolog.mkPrologEngine(theory)
-    guardianStrategy = new GuardianStrategy(engine)
-    doors = maze.doorCells
-    currentTurn = 0
-    isFinished = false
-    isVictory = false
-    currentPuzzle = None*/
 
   implicit def givenMaze: Maze = maze
 
+  /**
+   * Checks if the game is finished.
+   */
   def finished(): Boolean = isFinished
 
+  /**
+   * Checks if the user has won.
+   */
   def victory(): Boolean = isVictory
 
   def getMaze: Maze = maze
@@ -70,6 +69,9 @@ class Game(val settings: GameSettings):
   private inline def unless(condition: => Boolean)(block: => Unit): Unit =
     if !condition then block
 
+  /**
+   * Updates the current game state.
+   */
   def updateGameState(): Unit =
     unless(isFinished) {
       val cellsOccupied = Set(player.position)
@@ -77,8 +79,6 @@ class Game(val settings: GameSettings):
         case ((acc, occupied), guardian) =>
           val (gx, gy) = (guardian.position.row, guardian.position.col)
           val (px, py) = (player.position.row, player.position.col)
-          // val (nx, ny) = guardianStrategy.nextMove(gx, gy, px, py)
-          // val newPos = Position(nx, ny)
           val newPos = guardianStrategy.nextMove(gx, gy, px, py)
           val updatedGuardian =
             if maze.isWalkable(newPos) && !occupied(newPos) then
@@ -89,14 +89,7 @@ class Game(val settings: GameSettings):
       }
       guardians = updatedGuardians
       currentTurn += 1
-      // doors.foreach(_.decrementTurns())
       maze = maze.decreaseTurnsLockedDoors
-
-      /*isFinished =
-        player.lives <= 0 ||
-        currentTurn >= settings.maxDuration ||
-        maze.isExit(player.position)
-      isVictory = maze.isExit(player.position)*/
 
       if maze.isOnDoor(player.position) then
         if currentLevel < maxLevels then
@@ -116,8 +109,14 @@ class Game(val settings: GameSettings):
     isFinished = true
     isVictory
 
+  /**
+   * Moves the player in a new position.
+   *
+   * @param toPosition the destination of the movement.
+   * @return nothing in case of success, an error message otherwise.
+   */
   def movePlayerTo(toPosition: Position): Either[String, Unit] =
-    if isFinished then Left("(Game) Game finished!")
+    if isFinished then Left("Game finished!")
     else
       val fromPosition = player.position
       val validMove =
@@ -127,30 +126,47 @@ class Game(val settings: GameSettings):
       if validMove then
         fromPosition.directionBetween(toPosition).foreach(direction => player = player.move(direction))
         Right(())
-      else Left("(Game) Invalid move")
+      else Left("Invalid move")
 
   private def isCellOccupied(position: Position): Boolean = guardians.exists(_.position == position)
 
+  /**
+   * Opens a door.
+   *
+   * @param doorPosition position of the door.
+   * @param userAnswer the answer provided by the user.
+   * @return a message of success, otherwise a message of failure.
+   */
   def openDoor(doorPosition: Position, userAnswer: String): Either[String, String] =
-    if !player.position.isAdjacent(doorPosition) then Left("(Game) Player should be adjacent to the door")
+    if !player.position.isAdjacent(doorPosition) then Left("Player should be adjacent to the door")
     else
       maze.getCell(doorPosition) match
-        case door: DoorCell if door.isOpen => Left("(Game) Door is already open")
-        case door: DoorCell if door.isBlocked => Left(s"(Game) Door is blocked for ${door.turnsLeft} turns")
+        case door: DoorCell if door.isOpen => Left("Door is already open")
+        case door: DoorCell if door.isBlocked => Left(s"Door is blocked for ${door.turnsLeft} turns")
         case door: DoorCell =>
           if door.puzzle.checkAnswer(userAnswer) then
             maze = maze.unlockDoorAt(doorPosition)
-            Right("(Game) Door opened")
+            Right("Door opened")
           else
             maze = maze.blockDoorAt(doorPosition, settings.lockDoorInTurns)
-            Left("(Game) Puzzle failed")
-        case _ => Left("(Game) This is not a door")
+            Left("Puzzle failed")
+        case _ => Left("This is not a door")
 
+  /**
+   * Provides a puzzle.
+   */
   def startLogicChallenge(): Puzzle =
     val puzzle = PuzzleRepository.randomPuzzle()
     currentPuzzle = Some(puzzle)
     puzzle
 
+  /**
+   * Computes the fight against a guardian using logic.
+   *
+   * @param guardian the guardian to defeat.
+   * @param answer the answer of the riddle.
+   * @return a message of success, otherwise a message of failure.
+   */
   def fightLogic(guardian: Guardian, answer: String): Either[String, String] =
     currentPuzzle match
       case Some(puzzle) =>
@@ -160,24 +176,30 @@ class Game(val settings: GameSettings):
             player.
               addScore(50).
               fold (
-                error => Left(s"(Game) Score update failed: $error"),
+                error => Left(s"Score update failed: $error"),
                 newPlayer =>
                   player = newPlayer
-                  Right("(Game) Guardian defeated!")
+                  Right("Guardian defeated!")
               )
           else
             player.
               loseLife().
               fold(
-                error => Left(s"(Game) Lose life error: $error"),
+                error => Left(s"Lose life error: $error"),
                 newPlayer =>
                   player = newPlayer
-                  Left("(Game) Wrong answer, you lost a life")
+                  Left("Wrong answer, you lost a life")
               )
         guardians = guardians.filterNot(_ == guardian)
         result
-      case None => Left("(Game) No active puzzle")
+      case None => Left("No active puzzle")
 
+  /**
+   * Computes the fight against a guardian using luck.
+   *
+   * @param guardian the guardian to defeat.
+   * @return a message of success, otherwise a message of failure.
+   */
   def fightLuck(guardian: Guardian): Either[String, String] =
     val win = Random.nextBoolean()
     val result =
@@ -185,22 +207,28 @@ class Game(val settings: GameSettings):
         player.
           addScore(20).
           fold(
-            error => Left(s"(Game) Score update failed: $error"),
+            error => Left(s"Score update failed: $error"),
             newPlayer =>
               player = newPlayer
-              Right("(Game) Guardian defeated!")
+              Right("Guardian defeated!")
           )
       else
         player.
           loseLife().
           fold(
-            error => Left(s"(Game) Lose life error: $error"),
+            error => Left(s"Lose life error: $error"),
             newPlayer =>
               player = newPlayer
-              Right("(Game) You were unlucky, you lost the fight")
+              Right("You were unlucky, you lost the fight")
           )
     guardians = guardians.filterNot(_ == guardian)
     result
 
   def guardiansAtPlayer(): List[Guardian] =
     guardians.filter(guardian => player.position.isAdjacent(guardian.position))
+
+  def setPlayerPosition(position: Position): Unit =
+    player = Player(position, player.lives, player.score)
+
+  def setPlayerLives(lives: Int): Unit =
+    player = Player(player.position, lives, player.score)

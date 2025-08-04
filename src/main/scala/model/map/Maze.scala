@@ -128,7 +128,6 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @param position the position of the cell.
    * @return the cell based on the specified coordinates.
    */
-  // def getCell(position: Position): Cell = grid(position.row)(position.col)
 
   def getCell(position: Position): Cell = MazeUtils.getCell(grid, position)
 
@@ -223,15 +222,6 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    *
    * @return the position of the floor cell.
    */
-  /*def randomFloorCell(): Position =
-    val rand = new Random()
-    val floorCells =
-      for
-        row <- 0 until size/2
-        col <- 0 until size/2
-        if getCell(Position(row, col)).isInstanceOf[FloorCell]
-      yield Position(row, col)
-    floorCells(rand.nextInt(floorCells.length))*/
 
   def randomFloorCell(): Position =
     val allFloorCells = floorCells
@@ -245,14 +235,6 @@ class Maze private (val size: Int, val grid: Vector[Vector[Cell]]):
    * @param maze            context parameter to get the maze in the scope.
    * @return a list of guardians' position.
    */
-  /*def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[Position] =
-    val guardiansPosition =
-      for
-        row <- 0 until maze.size
-        col <- 0 until maze.size
-        if maze.getCell(Position(row, col)).isInstanceOf[FloorCell]
-      yield Position(row, col)
-    Random.shuffle(guardiansPosition.toList).take(guardiansNumber)*/
 
   def spawnGuardians(guardiansNumber: Int)(using maze: Maze): List[Position] =
     Random.shuffle(maze.floorCells.map(_.position)).take(guardiansNumber)
