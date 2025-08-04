@@ -5,6 +5,7 @@
 
 package model.entities
 
+import model.entities.PlayerError.{CannotUseItem, InventoryFull, ItemNotFound, NoLivesLeft}
 import model.utils.{Inventory, Item, Slots, Usable}
 import model.utils.Position.*
 
@@ -25,6 +26,9 @@ sealed trait PlayerError
 object PlayerError:
   case object NoLivesLeft extends PlayerError
   case class NegativeScore(invalidScore: Int) extends PlayerError
+  case class ItemNotFound(itemName: String) extends PlayerError
+  case class CannotUseItem(itemName: String, reason: String) extends PlayerError
+  case class InventoryFull(itemName: String, requested: Int) extends PlayerError
   case class Unexpected(errorMessage: String) extends PlayerError
 
 type Result[A] = Either[PlayerError, A] 
@@ -93,7 +97,7 @@ trait Player extends Entity:
    */
   def useItem[I <: Item](item: I)
                         (using slots: Slots[I])
-                        (using usable: Usable[I]): Either[String, Player]
+                        (using usable: Usable[I]): Result[Player]
 
   /**
    * Records a temporary status for some turns.
@@ -130,7 +134,7 @@ trait Player extends Entity:
    *         an error message otherwise.
    */
   def pickUp[I <: Item](item: I, quantity: Int = 1)
-                       (using slots: Slots[I]): Either[String, Player]
+                       (using slots: Slots[I]): Result[Player]
 
   /**
    * Checks if the inventory is full.
@@ -168,7 +172,7 @@ private[entities] case class PlayerImpl(position: Position,
   override def move(direction: Direction): Player =
     copy(position = position.move(direction.x, direction.y))
   override def loseLife(): Result[Player] =
-    if lives <= 0 then Left(PlayerError.NoLivesLeft)
+    if lives <= 0 then Left(NoLivesLeft)
     else Right(copy(lives = lives - 1))
   override def addScore(points: Int): Result[Player] =
     val newScore = score + points
@@ -178,12 +182,12 @@ private[entities] case class PlayerImpl(position: Position,
   override def withInventory(inv: Inventory): Player = copy(inventory = inv)
   override def useItem[I <: Item](item: I)
                                  (using slots: Slots[I])
-                                 (using usable: Usable[I]): Either[String, Player] =
+                                 (using usable: Usable[I]): Result[Player] =
     if !inventory.has(item) then
-      Left(s"Item ${item.name} not available")
+      Left(ItemNotFound(item.name))
     else
       inventory.remove(item) match
-        case Left(error) => Left(error.toString)
+        case Left(error) => Left(CannotUseItem(item.name, error.toString))
         case Right(newInv) =>
           val updatedPlayer = usable.use(item, this)
           Right(updatedPlayer.withInventory(newInv))
@@ -194,8 +198,8 @@ private[entities] case class PlayerImpl(position: Position,
     copy(statusEffects = updatedStatus.filter(_._2 > 0))
   override def hasStatus(name: String): Boolean = statusEffects.contains(name)
   override def pickUp[I <: Item](item: I, quantity: Int)
-                                (using slots: Slots[I]): Either[String, Player] =
+                                (using slots: Slots[I]): Result[Player] =
     inventory.add(item, quantity) match
-      case Left(error) => Left(error.toString)
+      case Left(error) => Left(InventoryFull(item.name, quantity))
       case Right(newInv) => Right(copy(inventory = newInv))
   override def isInventoryFull: Boolean = inventory.isFull

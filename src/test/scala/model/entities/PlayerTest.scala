@@ -92,8 +92,10 @@ class PlayerTest:
     val player = Player(Position(0, 0), 1, 0)
     val item = InvisibilityPotion()
     player.pickUp(item, 16) match
-      case Left(err) =>
-        assertTrue(err.contains("NotEnoughSpace"), s"Error should be NotEnoughSpace, got: $err")
+      case Left(PlayerError.InventoryFull(name, qty)) =>
+        assertEquals(item.name, name, "Error must report correct item")
+        assertEquals(16, qty, "Error must report requested quantity")
+      case Left(other) => fail(s"Expected InventoryFull error but got: $other")
       case Right(_) => fail("Expected pickUp to fail due to exceeding capacity")
 
   @Test
@@ -101,8 +103,10 @@ class PlayerTest:
     val player = Player(Position(0, 0), 1, 0)
     val item = InvisibilityPotion()
     player.useItem(item) match
-      case Left(err: String) =>
-        assertTrue(err.toLowerCase.contains("not available"))
+      case Left(PlayerError.ItemNotFound(name)) =>
+        assertEquals(item.name, name, "Error must report missing item")
+      case Left(other) =>
+        fail(s"Expected ItemNotFound error but got: $other")
       case Right(_) =>
         fail("Expected useItem to fail when item is missing")
 
