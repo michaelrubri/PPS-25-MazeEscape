@@ -10,7 +10,7 @@ import scala.util.NotGiven
 /**
  * Represents the slots of an inventory.
  */
-trait Slots[T <: Item]:
+trait Slots[I <: Item]:
 
   /**
    * Calculates the number of slots occupied by an item.
@@ -19,7 +19,7 @@ trait Slots[T <: Item]:
    * @param quantity the quantity of the item.
    * @return the number of slots occupied by the item.
    */
-  def slotsOccupied(item: T, quantity: Int): Int
+  def slotsOccupied(item: I, quantity: Int): Int
 
   /**
    * Calculate the number of slots needed for the item
@@ -30,39 +30,39 @@ trait Slots[T <: Item]:
    * @param newQty quantity to add.
    * @return the updated number of slots for the item.
    */
-  def neededSlots(item: T, existingQty: Int, newQty: Int): Int =
+  def neededSlots(item: I, existingQty: Int, newQty: Int): Int =
     val before = slotsOccupied(item, existingQty)
     val after = slotsOccupied(item, existingQty + newQty)
     after - before
 
 object Slots:
-  def apply[T <: Item](using slots: Slots[T]): Slots[T] = slots
+  def apply[I <: Item](using slots: Slots[I]): Slots[I] = slots
   
   export StackableSlots.given
   export NonStackableSlots.given
 
   object StackableSlots:
-    given [T <: Item](using stackable: Stackable[T]): Slots[T] with
-      override def slotsOccupied(item: T, quantity: Int): Int =
+    given [I <: Item](using stackable: Stackable[I]): Slots[I] with
+      override def slotsOccupied(item: I, quantity: Int): Int =
         if quantity <= 0 then 0
         else
           val maxStack = stackable.maxStack(item)
           (quantity + maxStack - 1) / maxStack
 
   object NonStackableSlots:
-    given [T <: Item](using NotGiven[Stackable[T]]): Slots[T] with
-      override def slotsOccupied(item: T, quantity: Int): Int = quantity
+    given [I <: Item](using NotGiven[Stackable[I]]): Slots[I] with
+      override def slotsOccupied(item: I, quantity: Int): Int = quantity
 
 /**
  * Represents errors associated with the inventory.
  */
-sealed trait InventoryError[T]
+sealed trait InventoryError[I]
 
 object InventoryError:
-  case class NotEnoughSpace[T](requiredSlots: Int, availableSlots: Int) extends InventoryError[T]
-  case class ItemNotFound[T](item: T) extends InventoryError[T]
-  case class InsufficientQuantity[T](item: T, required: Int, available: Int) extends InventoryError[T]
-  case class QuantityNotPositive[T](quantity: Int) extends InventoryError[T]
+  case class NotEnoughSpace[I](requiredSlots: Int, availableSlots: Int) extends InventoryError[I]
+  case class ItemNotFound[I](item: I) extends InventoryError[I]
+  case class InsufficientQuantity[I](item: I, required: Int, available: Int) extends InventoryError[I]
+  case class QuantityNotPositive[I](quantity: Int) extends InventoryError[I]
 
 /**
  * Represents the inventory as a collection of items.
