@@ -5,7 +5,7 @@ All’interno del controller viene gestita tutta la logica di flusso, mentre la 
 
 L’utilizzo del EventBus implementa un pattern Observer, permettendo di decoppiare la view dal controller. Ogni clic dell’utente sulla mappa viene trasformato in un CellClickEvent, che viene poi interpretato e processato.
 
-![UML Diagram Controller](Images/MazeEscape%20-%20Controller.png)
+![UML Diagram Controller](Images/MazeEscape%20-%20Controller%20%281%29.png)![UML Diagram Controller](Images/MazeEscape%20-%20Controller.png)
 
 ## Prolog
 
