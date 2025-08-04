@@ -72,25 +72,3 @@ Il progetto ha integrato pratiche moderne per la manutenzione continua del siste
 il branch main. Questo flusso garantisce l’integrità del sistema e da la possibilità al proprietario del repository e
 agli eventuali collaboratori e sviluppatori di avere una visione completa del progetto e delle eventuali problematiche a
 seguito dell'esecuzione della suite di test.
-
-### Versioning
-
-Per la gestione del codice sorgente, il team utilizza **Git** adottando il flusso di lavoro **GitFlow**, che consente
-una gestione strutturata e collaborativa dello sviluppo. La strategia prevede:
-
-* Due branch principali e stabili:
-
-    * main: contiene le versioni di produzione
-
-    * develop: raccoglie le ultime funzionalità pronte per il rilascio
-
-* **Branch dedicati per ogni nuova feature**, che vengono creati da develop e reintegrati tramite pull request una
-  volta completati.
-
-* **Branch hotfix**, creati direttamente da main, utilizzati per correggere rapidamente bug critici in produzione e
-  poi reintegrati sia su main che su develop.
-
-Per il tracciamento delle versioni viene adottato lo **Schema Semantico (Semantic Versioning)**, nel formato
-MAJOR.MINOR.PATCH, che consente di distinguere chiaramente tra aggiornamenti che introducono nuove funzionalità,
-miglioramenti minori o semplici correzioni di bug. Le versioni vengono taggate direttamente su Git e attivano
-automaticamente il processo di rilascio tramite GitHub Actions.
