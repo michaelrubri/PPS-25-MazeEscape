@@ -42,7 +42,7 @@ object Guardian:
    */
   def apply(initialPosition: Position): Guardian = GuardianImpl(initialPosition)
 
-case class GuardianImpl(position: Position) extends Guardian:
+private case class GuardianImpl(position: Position) extends Guardian:
   override def intercept(target: Position): Position =
     val (dx, dy) = (target.row - position.row, target.col - position.col)
     (dx, dy) match
