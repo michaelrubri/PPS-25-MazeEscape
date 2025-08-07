@@ -14,6 +14,8 @@ capacità di separare la logica di business, la presentazione all’utente, la g
 del dominio del sistema. Questo pattern rientra tra i principi architetturali che definiscono i sottosistemi principali,
 i loro confini, contratti e ruoli.
 
+---
+
 ### Model
 
 Il Model rappresenta i fondamenti della logica di gioco, includendo le regole, le entità in gioco, dunque sia l'utente
@@ -40,6 +42,16 @@ corretto gli input che vengono generati e invocare i relativi metodi nel Model. 
 ciclo di gioco, orchestrando in modo iterativo le azioni del giocatore durante l'esecuzione del sistema. Esso
 rappresenta il punto di connessione tra le altre due entità già presentate.
 
+```mermaid
+stateDiagram
+[*] --> Controller: Game Starts
+Controller --> View: Render game turn
+View --> View: Render the turn and wait for userInput
+View --> Controller: Send userInput
+Controller--> Model: Update Model
+Model --> Controller: Recive Updated Data
+```
+
 ---
 
 ## Motivazioni della scelta
@@ -50,3 +62,7 @@ sono distinti e gestiti da componenti dedicati, garantendo il rispetto del princ
 - **Estensibilità e flessibilità**: il design modulare consente di aggiungere facilmente nuove componentistiche, quali
 nuove tipologie di entità, nuove categorie di enigmi ed estendere l'interfaccia grafica, senza alterare la struttura di
 base.
+- **Manutenibilità:** La chiara divisione e l’uso di principi di immutabilità riducono gli effetti collaterali, rendendo
+il codice più prevedibile e facile da modificare o correggere in futuro.
+- **Testabilità:** Ogni componente può essere testato in isolamento, facilitando l’identificazione e la correzione di
+eventuali problemi. Il progetto include test automatizzati per i moduli appartenenti al Model e al Controller.

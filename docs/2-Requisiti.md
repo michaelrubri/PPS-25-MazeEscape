@@ -63,6 +63,6 @@ L'utente deve poter essere in grado di:
 
 1) Scala versione 3.x.
 2) JavaFx.
-3) JUnit e ScalaTest.
+3) JUnit.
 4) GitHub e GitHub Actions. 
 5) IntelliJ IDEA e SBT.
